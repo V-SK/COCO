@@ -36,6 +36,10 @@ Limits are enforced for delegated, custodial, and session-key flows through a SQ
 - `pnpm typecheck`
 - `pnpm release:check`
 
+## CI
+
+- GitHub Actions runs `pnpm release:check` for pushes to `main`, pull requests targeting `main`, and manual dispatches. Workflow: [.github/workflows/release-check.yml](/Users/ssv/Documents/New%20project/.github/workflows/release-check.yml)
+
 ## Manual Verification
 
 - `GET /health` returns chain ID, wallet mode, and loaded plugins.
