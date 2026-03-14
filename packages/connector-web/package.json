@@ -1,0 +1,34 @@
+{
+  "name": "@coco/connector-web",
+  "version": "1.0.0",
+  "description": "REST and WebSocket connector for Coco Framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "connector", "websocket", "express", "web3"],
+  "dependencies": {
+    "@coco/core": "workspace:*",
+    "@coco/plugin-price": "workspace:*",
+    "@coco/plugin-scan": "workspace:*",
+    "@coco/plugin-swap": "workspace:*",
+    "@coco/plugin-wallet": "workspace:*",
+    "express": "^5.1.0",
+    "ws": "^8.18.1"
+  }
+}

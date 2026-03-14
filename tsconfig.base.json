@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "types": ["node"],
+    "paths": {
+      "@coco/core": ["packages/core/src/index.ts"],
+      "@coco/plugin-price": ["packages/plugin-price/src/index.ts"],
+      "@coco/plugin-scan": ["packages/plugin-scan/src/index.ts"],
+      "@coco/plugin-swap": ["packages/plugin-swap/src/index.ts"],
+      "@coco/plugin-wallet": ["packages/plugin-wallet/src/index.ts"],
+      "@coco/connector-web": ["packages/connector-web/src/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@coco/cli",
+  "version": "1.0.0",
+  "description": "CLI for Coco Framework chat and server workflows.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "coco": "./dist/index.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "cli", "llm", "agent", "web3"],
+  "dependencies": {
+    "@coco/connector-web": "workspace:*",
+    "@coco/core": "workspace:*",
+    "@coco/plugin-price": "workspace:*",
+    "@coco/plugin-scan": "workspace:*",
+    "@coco/plugin-swap": "workspace:*",
+    "@coco/plugin-wallet": "workspace:*"
+  }
+}

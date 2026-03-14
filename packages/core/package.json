@@ -1,0 +1,32 @@
+{
+  "name": "@coco/core",
+  "version": "1.0.0",
+  "description": "Core runtime, LLM adapters, wallet execution, and memory primitives for Coco Framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "runtime", "llm", "wallet", "web3"],
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "ethers": "^6.13.5",
+    "pino": "^9.6.0",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
+  }
+}

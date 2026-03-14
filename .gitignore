@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+.release-artifacts
+.DS_Store
+.env
+.env.local
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
