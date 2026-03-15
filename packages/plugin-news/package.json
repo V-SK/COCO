@@ -1,0 +1,29 @@
+{
+  "name": "@coco/plugin-news",
+  "version": "1.2.0",
+  "description": "News aggregation and sentiment analysis for Coco Framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "plugin", "news", "sentiment", "crypto"],
+  "dependencies": {
+    "@coco/core": "workspace:*",
+    "zod": "^3.24.1"
+  }
+}

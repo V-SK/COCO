@@ -34,17 +34,27 @@
       "@coco/plugin-memory": ["packages/plugin-memory/src/index.ts"],
       "@coco/plugin-nfa": ["packages/plugin-nfa/src/index.ts"],
       "@coco/plugin-nft": ["packages/plugin-nft/src/index.ts"],
+      "@coco/plugin-news": ["packages/plugin-news/src/index.ts"],
       "@coco/plugin-ollama": ["packages/plugin-ollama/src/index.ts"],
       "@coco/plugin-orchestrator": [
         "packages/plugin-orchestrator/src/index.ts"
       ],
+      "@coco/plugin-polymarket": ["packages/plugin-polymarket/src/index.ts"],
       "@coco/plugin-price": ["packages/plugin-price/src/index.ts"],
+      "@coco/plugin-quant-signal": [
+        "packages/plugin-quant-signal/src/index.ts"
+      ],
+      "@coco/plugin-report": ["packages/plugin-report/src/index.ts"],
       "@coco/plugin-scan": ["packages/plugin-scan/src/index.ts"],
       "@coco/plugin-shell": ["packages/plugin-shell/src/index.ts"],
       "@coco/plugin-sql": ["packages/plugin-sql/src/index.ts"],
       "@coco/plugin-swap": ["packages/plugin-swap/src/index.ts"],
+      "@coco/plugin-trust-score": ["packages/plugin-trust-score/src/index.ts"],
       "@coco/plugin-tts": ["packages/plugin-tts/src/index.ts"],
       "@coco/plugin-vision": ["packages/plugin-vision/src/index.ts"],
+      "@coco/plugin-auto-trade": ["packages/plugin-auto-trade/src/index.ts"],
+      "@coco/plugin-copy-trade": ["packages/plugin-copy-trade/src/index.ts"],
+      "@coco/plugin-whale-alert": ["packages/plugin-whale-alert/src/index.ts"],
       "@coco/plugin-webhook": ["packages/plugin-webhook/src/index.ts"],
       "@coco/plugin-wallet": ["packages/plugin-wallet/src/index.ts"]
     }

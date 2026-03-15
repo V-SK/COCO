@@ -109,6 +109,38 @@ export default defineConfig({
         __dirname,
         'packages/plugin-nft/src/index.ts',
       ),
+      '@coco/plugin-news': resolve(
+        __dirname,
+        'packages/plugin-news/src/index.ts',
+      ),
+      '@coco/plugin-polymarket': resolve(
+        __dirname,
+        'packages/plugin-polymarket/src/index.ts',
+      ),
+      '@coco/plugin-quant-signal': resolve(
+        __dirname,
+        'packages/plugin-quant-signal/src/index.ts',
+      ),
+      '@coco/plugin-report': resolve(
+        __dirname,
+        'packages/plugin-report/src/index.ts',
+      ),
+      '@coco/plugin-trust-score': resolve(
+        __dirname,
+        'packages/plugin-trust-score/src/index.ts',
+      ),
+      '@coco/plugin-auto-trade': resolve(
+        __dirname,
+        'packages/plugin-auto-trade/src/index.ts',
+      ),
+      '@coco/plugin-copy-trade': resolve(
+        __dirname,
+        'packages/plugin-copy-trade/src/index.ts',
+      ),
+      '@coco/plugin-whale-alert': resolve(
+        __dirname,
+        'packages/plugin-whale-alert/src/index.ts',
+      ),
     },
   },
   test: {
@@ -140,11 +172,19 @@ export default defineConfig({
         'packages/plugin-memory/**',
         'packages/plugin-nfa/**',
         'packages/plugin-nft/**',
+        'packages/plugin-news/**',
         'packages/plugin-ollama/**',
         'packages/plugin-orchestrator/**',
+        'packages/plugin-polymarket/**',
         'packages/plugin-shell/**',
         'packages/plugin-sql/**',
         'packages/plugin-tts/**',
+        'packages/plugin-quant-signal/**',
+        'packages/plugin-report/**',
+        'packages/plugin-trust-score/**',
+        'packages/plugin-auto-trade/**',
+        'packages/plugin-copy-trade/**',
+        'packages/plugin-whale-alert/**',
         'packages/plugin-vision/**',
         'packages/plugin-webhook/**',
       ],

@@ -5,6 +5,7 @@ export * from './runtime.js';
 export * from './types.js';
 export * from './llm/index.js';
 export * from './memory/index.js';
+export * from './quant/store.js';
 export * from './wallet/ledger.js';
 export * from './wallet/executor.js';
 export * from './utils/json.js';

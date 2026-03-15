@@ -26,6 +26,14 @@ Coco is a TypeScript monorepo for a BNB Chain focused AI agent runtime with tool
 - `@coco/plugin-webhook`: webhook delivery
 - `@coco/plugin-history`: BscScan/RPC history lookups
 - `@coco/plugin-nft`: NFT detail and transfer flows
+- `@coco/plugin-news`: RSS and CryptoPanic aggregation with token sentiment
+- `@coco/plugin-trust-score`: normalized token trust scoring
+- `@coco/plugin-quant-signal`: indicator-driven trade signals and degraded backtests
+- `@coco/plugin-auto-trade`: paper/live strategy runs, orders, and positions
+- `@coco/plugin-copy-trade`: confirmed-wallet copy trading with trust filters
+- `@coco/plugin-whale-alert`: whale movement classification and monitoring
+- `@coco/plugin-report`: md/html/pdf report generation
+- `@coco/plugin-polymarket`: read-only prediction market discovery
 - `@coco/connector-web`: REST and WebSocket connector
 - `@coco/connector-telegram`: Telegram runtime bridge
 - `@coco/connector-discord`: Discord runtime bridge
@@ -73,3 +81,5 @@ Limits are enforced for delegated, custodial, and session-key flows through a SQ
 - `delegated`, `custodial`, and `session-key` modes log audit entries without exposing secrets.
 - `plugin-knowledge` prefers `sqlite-vec` and falls back to a local HNSW-like retrieval path when the extension is unavailable.
 - `plugin-computeruse` requires extra OS permissions and is limited to `macOS` and `Linux` in this release.
+- Phase 3 adds quant trading primitives while keeping execution on BNB Chain and leaving Polymarket in read-only mode.
+- `plugin-report` exports PDFs through Puppeteer when a browser binary is available; otherwise it returns a structured availability error.

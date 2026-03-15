@@ -125,6 +125,94 @@ export interface MemoryRecord {
   accessCount: number;
 }
 
+export interface MarketSnapshot {
+  token: string;
+  chainId: number;
+  price: string;
+  timestamp: number;
+  volume24h?: string | undefined;
+  liquidityUsd?: number | undefined;
+  sentimentScore?: number | undefined;
+  source?: string | undefined;
+}
+
+export interface TradeIntent {
+  token: string;
+  side: 'BUY' | 'SELL' | 'HOLD';
+  amountUsd?: number | undefined;
+  strategy: string;
+  confidence: number;
+  reason: string;
+  metadata?: Record<string, unknown> | undefined;
+}
+
+export interface BacktestTrade {
+  timestamp: number;
+  side: 'BUY' | 'SELL';
+  price: number;
+  pnl?: number | undefined;
+  reason?: string | undefined;
+}
+
+export interface BacktestCoverage {
+  degraded: boolean;
+  price: boolean;
+  onchain: boolean;
+  news: boolean;
+  notes: string[];
+}
+
+export interface BacktestResult {
+  token: string;
+  strategy: string;
+  startTime: number;
+  endTime: number;
+  trades: BacktestTrade[];
+  signalCount: number;
+  totalReturnPct: number;
+  winRate: number;
+  maxDrawdownPct: number;
+  coverage: BacktestCoverage;
+}
+
+export interface PositionRecord {
+  id: string;
+  token: string;
+  side: 'LONG' | 'SHORT';
+  entryPrice: string;
+  currentPrice: string;
+  size: string;
+  sizeUsd: string;
+  pnl: string;
+  pnlPct: number;
+  stopLoss?: string | undefined;
+  takeProfit?: string | undefined;
+  strategy: string;
+  status: 'OPEN' | 'CLOSED';
+  openedAt: number;
+  closedAt?: number | undefined;
+}
+
+export interface RiskConfigSnapshot {
+  useDefaultTemplate: boolean;
+  resolved: Record<string, number | boolean | null>;
+  customConfig?:
+    | Record<string, number | boolean | null | undefined>
+    | undefined;
+}
+
+export interface StrategyRun {
+  id: string;
+  strategy: string;
+  token: string;
+  mode: 'paper' | 'live';
+  status: 'RUNNING' | 'STOPPED' | 'PAUSED' | 'ERROR';
+  startedAt: number;
+  updatedAt: number;
+  riskConfig: RiskConfigSnapshot;
+  metadata?: Record<string, unknown> | undefined;
+}
+
 export interface RecallOptions {
   sessionId?: string | undefined;
   userId?: string | undefined;

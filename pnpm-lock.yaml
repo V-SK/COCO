@@ -53,6 +53,9 @@ importers:
       '@coco/plugin-alerts':
         specifier: workspace:*
         version: link:../../packages/plugin-alerts
+      '@coco/plugin-auto-trade':
+        specifier: workspace:*
+        version: link:../../packages/plugin-auto-trade
       '@coco/plugin-browser':
         specifier: workspace:*
         version: link:../../packages/plugin-browser
@@ -62,6 +65,9 @@ importers:
       '@coco/plugin-computeruse':
         specifier: workspace:*
         version: link:../../packages/plugin-computeruse
+      '@coco/plugin-copy-trade':
+        specifier: workspace:*
+        version: link:../../packages/plugin-copy-trade
       '@coco/plugin-cron':
         specifier: workspace:*
         version: link:../../packages/plugin-cron
@@ -77,6 +83,9 @@ importers:
       '@coco/plugin-memory':
         specifier: workspace:*
         version: link:../../packages/plugin-memory
+      '@coco/plugin-news':
+        specifier: workspace:*
+        version: link:../../packages/plugin-news
       '@coco/plugin-nfa':
         specifier: workspace:*
         version: link:../../packages/plugin-nfa
@@ -86,9 +95,18 @@ importers:
       '@coco/plugin-orchestrator':
         specifier: workspace:*
         version: link:../../packages/plugin-orchestrator
+      '@coco/plugin-polymarket':
+        specifier: workspace:*
+        version: link:../../packages/plugin-polymarket
       '@coco/plugin-price':
         specifier: workspace:*
         version: link:../../packages/plugin-price
+      '@coco/plugin-quant-signal':
+        specifier: workspace:*
+        version: link:../../packages/plugin-quant-signal
+      '@coco/plugin-report':
+        specifier: workspace:*
+        version: link:../../packages/plugin-report
       '@coco/plugin-scan':
         specifier: workspace:*
         version: link:../../packages/plugin-scan
@@ -101,6 +119,9 @@ importers:
       '@coco/plugin-swap':
         specifier: workspace:*
         version: link:../../packages/plugin-swap
+      '@coco/plugin-trust-score':
+        specifier: workspace:*
+        version: link:../../packages/plugin-trust-score
       '@coco/plugin-tts':
         specifier: workspace:*
         version: link:../../packages/plugin-tts
@@ -113,6 +134,9 @@ importers:
       '@coco/plugin-webhook':
         specifier: workspace:*
         version: link:../../packages/plugin-webhook
+      '@coco/plugin-whale-alert':
+        specifier: workspace:*
+        version: link:../../packages/plugin-whale-alert
 
   packages/connector-discord:
     dependencies:
@@ -146,6 +170,9 @@ importers:
       '@coco/plugin-alerts':
         specifier: workspace:*
         version: link:../plugin-alerts
+      '@coco/plugin-auto-trade':
+        specifier: workspace:*
+        version: link:../plugin-auto-trade
       '@coco/plugin-browser':
         specifier: workspace:*
         version: link:../plugin-browser
@@ -155,6 +182,9 @@ importers:
       '@coco/plugin-computeruse':
         specifier: workspace:*
         version: link:../plugin-computeruse
+      '@coco/plugin-copy-trade':
+        specifier: workspace:*
+        version: link:../plugin-copy-trade
       '@coco/plugin-cron':
         specifier: workspace:*
         version: link:../plugin-cron
@@ -170,6 +200,9 @@ importers:
       '@coco/plugin-memory':
         specifier: workspace:*
         version: link:../plugin-memory
+      '@coco/plugin-news':
+        specifier: workspace:*
+        version: link:../plugin-news
       '@coco/plugin-nfa':
         specifier: workspace:*
         version: link:../plugin-nfa
@@ -179,9 +212,18 @@ importers:
       '@coco/plugin-orchestrator':
         specifier: workspace:*
         version: link:../plugin-orchestrator
+      '@coco/plugin-polymarket':
+        specifier: workspace:*
+        version: link:../plugin-polymarket
       '@coco/plugin-price':
         specifier: workspace:*
         version: link:../plugin-price
+      '@coco/plugin-quant-signal':
+        specifier: workspace:*
+        version: link:../plugin-quant-signal
+      '@coco/plugin-report':
+        specifier: workspace:*
+        version: link:../plugin-report
       '@coco/plugin-scan':
         specifier: workspace:*
         version: link:../plugin-scan
@@ -194,6 +236,9 @@ importers:
       '@coco/plugin-swap':
         specifier: workspace:*
         version: link:../plugin-swap
+      '@coco/plugin-trust-score':
+        specifier: workspace:*
+        version: link:../plugin-trust-score
       '@coco/plugin-tts':
         specifier: workspace:*
         version: link:../plugin-tts
@@ -206,6 +251,9 @@ importers:
       '@coco/plugin-webhook':
         specifier: workspace:*
         version: link:../plugin-webhook
+      '@coco/plugin-whale-alert':
+        specifier: workspace:*
+        version: link:../plugin-whale-alert
       express:
         specifier: ^5.1.0
         version: 5.2.1
@@ -243,6 +291,15 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-auto-trade:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-browser:
     dependencies:
       '@coco/core':
@@ -268,6 +325,15 @@ importers:
         version: 3.25.76
 
   packages/plugin-computeruse:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-copy-trade:
     dependencies:
       '@coco/core':
         specifier: workspace:*
@@ -333,6 +399,15 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-news:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-nfa:
     dependencies:
       '@coco/core':
@@ -372,6 +447,15 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-polymarket:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-price:
     dependencies:
       '@coco/core':
@@ -380,6 +464,24 @@ importers:
       ws:
         specifier: ^8.18.1
         version: 8.19.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-quant-signal:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-report:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
       zod:
         specifier: ^3.24.1
         version: 3.25.76
@@ -429,6 +531,15 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-trust-score:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-tts:
     dependencies:
       '@coco/core':
@@ -460,6 +571,15 @@ importers:
         version: 3.25.76
 
   packages/plugin-webhook:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-whale-alert:
     dependencies:
       '@coco/core':
         specifier: workspace:*
