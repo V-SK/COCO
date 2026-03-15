@@ -1,6 +1,6 @@
 {
   "name": "@coco/core",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Core runtime, LLM adapters, wallet execution, and memory primitives for Coco Framework.",
   "license": "MIT",
   "type": "module",

@@ -17,11 +17,36 @@
     "types": ["node"],
     "paths": {
       "@coco/core": ["packages/core/src/index.ts"],
+      "@coco/connector-discord": ["packages/connector-discord/src/index.ts"],
+      "@coco/connector-telegram": ["packages/connector-telegram/src/index.ts"],
+      "@coco/connector-twitter": ["packages/connector-twitter/src/index.ts"],
+      "@coco/connector-web": ["packages/connector-web/src/index.ts"],
+      "@coco/plugin-alerts": ["packages/plugin-alerts/src/index.ts"],
+      "@coco/plugin-browser": ["packages/plugin-browser/src/index.ts"],
+      "@coco/plugin-chain-events": [
+        "packages/plugin-chain-events/src/index.ts"
+      ],
+      "@coco/plugin-computeruse": ["packages/plugin-computeruse/src/index.ts"],
+      "@coco/plugin-cron": ["packages/plugin-cron/src/index.ts"],
+      "@coco/plugin-dex-agg": ["packages/plugin-dex-agg/src/index.ts"],
+      "@coco/plugin-history": ["packages/plugin-history/src/index.ts"],
+      "@coco/plugin-knowledge": ["packages/plugin-knowledge/src/index.ts"],
+      "@coco/plugin-memory": ["packages/plugin-memory/src/index.ts"],
+      "@coco/plugin-nfa": ["packages/plugin-nfa/src/index.ts"],
+      "@coco/plugin-nft": ["packages/plugin-nft/src/index.ts"],
+      "@coco/plugin-ollama": ["packages/plugin-ollama/src/index.ts"],
+      "@coco/plugin-orchestrator": [
+        "packages/plugin-orchestrator/src/index.ts"
+      ],
       "@coco/plugin-price": ["packages/plugin-price/src/index.ts"],
       "@coco/plugin-scan": ["packages/plugin-scan/src/index.ts"],
+      "@coco/plugin-shell": ["packages/plugin-shell/src/index.ts"],
+      "@coco/plugin-sql": ["packages/plugin-sql/src/index.ts"],
       "@coco/plugin-swap": ["packages/plugin-swap/src/index.ts"],
-      "@coco/plugin-wallet": ["packages/plugin-wallet/src/index.ts"],
-      "@coco/connector-web": ["packages/connector-web/src/index.ts"]
+      "@coco/plugin-tts": ["packages/plugin-tts/src/index.ts"],
+      "@coco/plugin-vision": ["packages/plugin-vision/src/index.ts"],
+      "@coco/plugin-webhook": ["packages/plugin-webhook/src/index.ts"],
+      "@coco/plugin-wallet": ["packages/plugin-wallet/src/index.ts"]
     }
   }
 }

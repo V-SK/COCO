@@ -5,6 +5,7 @@ export type UUID = string;
 export type WalletMode = 'unsigned' | 'delegated' | 'session-key' | 'custodial';
 export type WalletPermission = 'swap' | 'transfer';
 export type ChatRole = 'system' | 'user' | 'assistant' | 'tool';
+export type SqlQueryMode = 'readonly' | 'readwrite';
 
 export interface WalletLimits {
   perTxUsd: number;
@@ -27,7 +28,7 @@ export interface WalletConfig {
 
 export interface CocoRuntimeConfig {
   llm: {
-    provider: 'vllm' | 'openai' | 'anthropic';
+    provider: 'vllm' | 'openai' | 'anthropic' | 'ollama';
     baseUrl: string;
     apiKey?: string | undefined;
     model: string;
@@ -111,6 +112,27 @@ export interface SessionRecord {
   metadata: Record<string, unknown>;
 }
 
+export interface MemoryRecord {
+  id: string;
+  sessionId: string;
+  userId?: string | undefined;
+  type: 'fact' | 'preference' | 'context' | 'conversation';
+  content: string;
+  embedding?: number[] | undefined;
+  importance: number;
+  createdAt: Date;
+  accessedAt: Date;
+  accessCount: number;
+}
+
+export interface RecallOptions {
+  sessionId?: string | undefined;
+  userId?: string | undefined;
+  type?: MemoryRecord['type'] | undefined;
+  limit?: number | undefined;
+  minImportance?: number | undefined;
+}
+
 export interface MemoryStore {
   getSession: (sessionId: UUID) => Promise<SessionRecord>;
   appendMessages: (sessionId: UUID, messages: LLMMessage[]) => Promise<void>;
@@ -119,6 +141,20 @@ export interface MemoryStore {
     metadata: Record<string, unknown>,
   ) => Promise<void>;
   clearSession: (sessionId: UUID) => Promise<void>;
+}
+
+export interface PersistentMemoryStore extends MemoryStore {
+  remember: (
+    memory: Omit<
+      MemoryRecord,
+      'id' | 'createdAt' | 'accessedAt' | 'accessCount'
+    >,
+  ) => Promise<MemoryRecord>;
+  recall: (
+    query: string,
+    options?: RecallOptions | undefined,
+  ) => Promise<MemoryRecord[]>;
+  forget: (memoryId: string) => Promise<void>;
 }
 
 export interface CocoContext {
@@ -197,6 +233,13 @@ export interface WalletExecutionRequest {
   tx: Record<string, unknown>;
   amountUsd?: number | undefined;
   description: string;
+}
+
+export interface SessionKeyExecutor {
+  execute: (
+    request: WalletExecutionRequest,
+    privateKey: string,
+  ) => Promise<ToolResult>;
 }
 
 export interface WalletExecutor {

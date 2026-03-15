@@ -1,0 +1,30 @@
+{
+  "name": "@coco/plugin-memory",
+  "version": "1.2.0",
+  "description": "Persistent memory plugin for Coco Framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "memory", "sqlite", "plugin"],
+  "dependencies": {
+    "@coco/core": "workspace:*",
+    "better-sqlite3": "^11.8.1",
+    "zod": "^3.24.1"
+  }
+}

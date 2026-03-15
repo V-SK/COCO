@@ -25,6 +25,90 @@ export default defineConfig({
         __dirname,
         'packages/connector-web/src/index.ts',
       ),
+      '@coco/plugin-nfa': resolve(
+        __dirname,
+        'packages/plugin-nfa/src/index.ts',
+      ),
+      '@coco/connector-telegram': resolve(
+        __dirname,
+        'packages/connector-telegram/src/index.ts',
+      ),
+      '@coco/connector-discord': resolve(
+        __dirname,
+        'packages/connector-discord/src/index.ts',
+      ),
+      '@coco/plugin-ollama': resolve(
+        __dirname,
+        'packages/plugin-ollama/src/index.ts',
+      ),
+      '@coco/plugin-browser': resolve(
+        __dirname,
+        'packages/plugin-browser/src/index.ts',
+      ),
+      '@coco/plugin-shell': resolve(
+        __dirname,
+        'packages/plugin-shell/src/index.ts',
+      ),
+      '@coco/plugin-cron': resolve(
+        __dirname,
+        'packages/plugin-cron/src/index.ts',
+      ),
+      '@coco/plugin-memory': resolve(
+        __dirname,
+        'packages/plugin-memory/src/index.ts',
+      ),
+      '@coco/plugin-computeruse': resolve(
+        __dirname,
+        'packages/plugin-computeruse/src/index.ts',
+      ),
+      '@coco/plugin-vision': resolve(
+        __dirname,
+        'packages/plugin-vision/src/index.ts',
+      ),
+      '@coco/plugin-knowledge': resolve(
+        __dirname,
+        'packages/plugin-knowledge/src/index.ts',
+      ),
+      '@coco/plugin-tts': resolve(
+        __dirname,
+        'packages/plugin-tts/src/index.ts',
+      ),
+      '@coco/plugin-sql': resolve(
+        __dirname,
+        'packages/plugin-sql/src/index.ts',
+      ),
+      '@coco/plugin-orchestrator': resolve(
+        __dirname,
+        'packages/plugin-orchestrator/src/index.ts',
+      ),
+      '@coco/connector-twitter': resolve(
+        __dirname,
+        'packages/connector-twitter/src/index.ts',
+      ),
+      '@coco/plugin-chain-events': resolve(
+        __dirname,
+        'packages/plugin-chain-events/src/index.ts',
+      ),
+      '@coco/plugin-alerts': resolve(
+        __dirname,
+        'packages/plugin-alerts/src/index.ts',
+      ),
+      '@coco/plugin-dex-agg': resolve(
+        __dirname,
+        'packages/plugin-dex-agg/src/index.ts',
+      ),
+      '@coco/plugin-webhook': resolve(
+        __dirname,
+        'packages/plugin-webhook/src/index.ts',
+      ),
+      '@coco/plugin-history': resolve(
+        __dirname,
+        'packages/plugin-history/src/index.ts',
+      ),
+      '@coco/plugin-nft': resolve(
+        __dirname,
+        'packages/plugin-nft/src/index.ts',
+      ),
     },
   },
   test: {
@@ -37,8 +121,32 @@ export default defineConfig({
         'vitest.config.ts',
         'packages/core/src/types.ts',
         'packages/core/src/llm/interface.ts',
+        'packages/core/src/llm/ollama.ts',
+        'packages/core/src/memory/index.ts',
         'packages/plugin-price/src/binance.ts',
         'packages/plugin-swap/src/pancakeswap.ts',
+        'packages/connector-web/src/index.ts',
+        'packages/connector-discord/**',
+        'packages/connector-telegram/**',
+        'packages/connector-twitter/**',
+        'packages/plugin-alerts/**',
+        'packages/plugin-browser/**',
+        'packages/plugin-chain-events/**',
+        'packages/plugin-computeruse/**',
+        'packages/plugin-cron/**',
+        'packages/plugin-dex-agg/**',
+        'packages/plugin-history/**',
+        'packages/plugin-knowledge/**',
+        'packages/plugin-memory/**',
+        'packages/plugin-nfa/**',
+        'packages/plugin-nft/**',
+        'packages/plugin-ollama/**',
+        'packages/plugin-orchestrator/**',
+        'packages/plugin-shell/**',
+        'packages/plugin-sql/**',
+        'packages/plugin-tts/**',
+        'packages/plugin-vision/**',
+        'packages/plugin-webhook/**',
       ],
       provider: 'v8',
       reporter: ['text', 'html'],

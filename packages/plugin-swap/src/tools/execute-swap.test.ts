@@ -1,8 +1,12 @@
 import { type CocoContext, createRuntime } from '@coco/core';
-import { describe, expect, it } from 'vitest';
+import { Wallet } from 'ethers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createNoopLedger } from '../../../../tests/fixtures/helpers.js';
 import { setPancakeSwapService } from '../index.js';
 import { executeSwapTool } from './execute-swap.js';
+
+const PRIVATE_KEY =
+  '0x59c6995e998f97a5a0044966f0945382dbd8c6dd8a9c04cb2a4bbf2c65f75f73';
 
 const fakeSwapService = {
   async init() {},
@@ -52,8 +56,9 @@ function buildRuntime(walletMode: 'unsigned' | 'session-key') {
         walletMode === 'session-key'
           ? {
               mode: 'session-key',
+              privateKey: 'COCO_TEST_PRIVATE_KEY',
               sessionKey: {
-                signer: '0x0000000000000000000000000000000000001111',
+                signer: new Wallet(PRIVATE_KEY).address,
                 validUntil: Math.floor(Date.now() / 1000) + 3600,
                 permissions: ['swap'],
               },
@@ -75,6 +80,11 @@ function buildRuntime(walletMode: 'unsigned' | 'session-key') {
 }
 
 describe('executeSwapTool', () => {
+  afterEach(() => {
+    process.env.COCO_TEST_PRIVATE_KEY = undefined;
+    vi.restoreAllMocks();
+  });
+
   it('returns unsigned transactions in unsigned mode', async () => {
     setPancakeSwapService(fakeSwapService as never);
     const runtime = buildRuntime('unsigned');
@@ -102,7 +112,11 @@ describe('executeSwapTool', () => {
     });
   });
 
-  it('returns not implemented for session-key mode after validation', async () => {
+  it('broadcasts session-key swaps after validation', async () => {
+    process.env.COCO_TEST_PRIVATE_KEY = PRIVATE_KEY;
+    vi.spyOn(Wallet.prototype, 'sendTransaction').mockResolvedValue({
+      hash: '0xswap',
+    } as never);
     setPancakeSwapService(fakeSwapService as never);
     const runtime = buildRuntime('session-key');
     const ctx: CocoContext = {
@@ -121,7 +135,13 @@ describe('executeSwapTool', () => {
       slippageBps: 300,
     });
 
-    expect(result.success).toBe(false);
-    expect(result.code).toBe('not_implemented');
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({
+      type: 'signed_tx',
+      txHash: '0xswap',
+      quote: {
+        amountOut: '600',
+      },
+    });
   });
 });

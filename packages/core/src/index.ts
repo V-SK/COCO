@@ -9,3 +9,5 @@ export * from './wallet/ledger.js';
 export * from './wallet/executor.js';
 export * from './utils/json.js';
 export * from './utils/markets.js';
+export * from './utils/optional-import.js';
+export * from './utils/safety.js';

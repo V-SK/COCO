@@ -1,6 +1,6 @@
 {
   "name": "@coco/cli",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "CLI for Coco Framework chat and server workflows.",
   "license": "MIT",
   "type": "module",
@@ -18,11 +18,29 @@
   },
   "keywords": ["coco", "cli", "llm", "agent", "web3"],
   "dependencies": {
+    "@coco/connector-twitter": "workspace:*",
     "@coco/connector-web": "workspace:*",
     "@coco/core": "workspace:*",
+    "@coco/plugin-alerts": "workspace:*",
+    "@coco/plugin-browser": "workspace:*",
+    "@coco/plugin-chain-events": "workspace:*",
+    "@coco/plugin-computeruse": "workspace:*",
+    "@coco/plugin-cron": "workspace:*",
+    "@coco/plugin-dex-agg": "workspace:*",
+    "@coco/plugin-history": "workspace:*",
+    "@coco/plugin-knowledge": "workspace:*",
+    "@coco/plugin-memory": "workspace:*",
+    "@coco/plugin-nfa": "workspace:*",
+    "@coco/plugin-nft": "workspace:*",
+    "@coco/plugin-orchestrator": "workspace:*",
     "@coco/plugin-price": "workspace:*",
     "@coco/plugin-scan": "workspace:*",
+    "@coco/plugin-shell": "workspace:*",
+    "@coco/plugin-sql": "workspace:*",
     "@coco/plugin-swap": "workspace:*",
-    "@coco/plugin-wallet": "workspace:*"
+    "@coco/plugin-tts": "workspace:*",
+    "@coco/plugin-vision": "workspace:*",
+    "@coco/plugin-wallet": "workspace:*",
+    "@coco/plugin-webhook": "workspace:*"
   }
 }

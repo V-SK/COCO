@@ -4,8 +4,11 @@ import type {
   RuntimeDependencies,
 } from '../types.js';
 import { AnthropicProvider } from './anthropic.js';
+import { OllamaProvider } from './ollama.js';
 import { OpenAICompatibleProvider } from './openai-compat.js';
 import { createVllmProvider } from './vllm.js';
+
+export { OllamaProvider } from './ollama.js';
 
 export function createLLMProvider(
   config: CocoRuntimeConfig['llm'],
@@ -27,6 +30,12 @@ export function createLLMProvider(
 
   if (config.provider === 'vllm') {
     return createVllmProvider(providerConfig, {
+      fetchImpl: dependencies.fetch,
+    });
+  }
+
+  if (config.provider === 'ollama') {
+    return new OllamaProvider(providerConfig, {
       fetchImpl: dependencies.fetch,
     });
   }

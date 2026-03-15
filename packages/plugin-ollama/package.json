@@ -1,0 +1,28 @@
+{
+  "name": "@coco/plugin-ollama",
+  "version": "1.2.0",
+  "description": "Ollama provider bridge for Coco Framework.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "prepack": "pnpm build",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["coco", "ollama", "llm", "provider"],
+  "dependencies": {
+    "@coco/core": "workspace:*"
+  }
+}

@@ -1,6 +1,6 @@
 # Coco Framework
 
-Coco is a TypeScript monorepo for a BNB Chain focused AI agent runtime with tool calling, wallet execution modes, plugins, a web connector, and a CLI.
+Coco is a TypeScript monorepo for a BNB Chain focused AI agent runtime with tool calling, wallet execution modes, connectors, browser/computer automation, memory persistence, SQL, RAG, alerts, and on-chain automation.
 
 ## Packages
 
@@ -9,14 +9,34 @@ Coco is a TypeScript monorepo for a BNB Chain focused AI agent runtime with tool
 - `@coco/plugin-scan`: GoPlus contract scanning
 - `@coco/plugin-swap`: PancakeSwap quote and execution flow
 - `@coco/plugin-wallet`: balance and transfer support
+- `@coco/plugin-nfa`: BAP-578 agent identities
+- `@coco/plugin-browser`: browser automation
+- `@coco/plugin-shell`: shell and filesystem access
+- `@coco/plugin-cron`: persistent scheduled tasks
+- `@coco/plugin-memory`: persistent memory store
+- `@coco/plugin-computeruse`: desktop automation (macOS/Linux)
+- `@coco/plugin-vision`: image analysis and OCR
+- `@coco/plugin-knowledge`: local document indexing and retrieval
+- `@coco/plugin-tts`: text-to-speech generation
+- `@coco/plugin-sql`: readonly-first SQL access
+- `@coco/plugin-orchestrator`: multi-agent orchestration
+- `@coco/plugin-chain-events`: price and chain watchers
+- `@coco/plugin-alerts`: alerts and notifications
+- `@coco/plugin-dex-agg`: ParaSwap/OpenOcean quote aggregation
+- `@coco/plugin-webhook`: webhook delivery
+- `@coco/plugin-history`: BscScan/RPC history lookups
+- `@coco/plugin-nft`: NFT detail and transfer flows
 - `@coco/connector-web`: REST and WebSocket connector
+- `@coco/connector-telegram`: Telegram runtime bridge
+- `@coco/connector-discord`: Discord runtime bridge
+- `@coco/connector-twitter`: Twitter/X skeleton connector
 - `@coco/cli`: local chat and server entrypoints
 
 ## Wallet Modes
 
 - `unsigned`: returns unsigned transactions
 - `delegated`: signs and broadcasts through a server-managed delegated wallet
-- `session-key`: validates config and limits, then returns `not_implemented`
+- `session-key`: enforces signer, expiry, permissions, limits, and signs with the configured session key
 - `custodial`: signs and broadcasts through a server-managed custodial wallet
 
 Limits are enforced for delegated, custodial, and session-key flows through a SQLite-backed ledger that resets on UTC day boundaries.
@@ -50,5 +70,6 @@ Limits are enforced for delegated, custodial, and session-key flows through a SQ
 ## Notes
 
 - `wallet.privateKey` is treated as an environment variable name, not the private key value itself.
-- `delegated` and `custodial` modes log audit entries without exposing secrets.
-- `session-key` is scaffolded and intentionally does not broadcast transactions yet.
+- `delegated`, `custodial`, and `session-key` modes log audit entries without exposing secrets.
+- `plugin-knowledge` prefers `sqlite-vec` and falls back to a local HNSW-like retrieval path when the extension is unavailable.
+- `plugin-computeruse` requires extra OS permissions and is limited to `macOS` and `Linux` in this release.

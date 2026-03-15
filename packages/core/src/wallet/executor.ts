@@ -9,6 +9,7 @@ import { CocoError } from '../errors.js';
 import type {
   ConfirmationRequiredResult,
   LimitLedger,
+  SessionKeyExecutor,
   WalletConfig,
   WalletExecutionRequest,
   WalletExecutor,
@@ -69,11 +70,22 @@ export class DefaultWalletExecutor implements WalletExecutor {
   readonly #provider: JsonRpcProvider;
   readonly #ledger: LimitLedger;
   readonly #logger: Logger;
+  readonly #sessionKeyExecutor: SessionKeyExecutor;
 
-  constructor(rpcUrl: string, ledger: LimitLedger, logger: Logger) {
+  constructor(
+    rpcUrl: string,
+    ledger: LimitLedger,
+    logger: Logger,
+    sessionKeyExecutor: SessionKeyExecutor = new LocalSessionKeyExecutor(
+      rpcUrl,
+      ledger,
+      logger,
+    ),
+  ) {
     this.#provider = new JsonRpcProvider(rpcUrl);
     this.#ledger = ledger;
     this.#logger = logger;
+    this.#sessionKeyExecutor = sessionKeyExecutor;
   }
 
   async resolveAddress(
@@ -85,7 +97,14 @@ export class DefaultWalletExecutor implements WalletExecutor {
     }
 
     if (wallet.mode === 'session-key') {
-      return wallet.sessionKey?.signer;
+      if (wallet.sessionKey?.signer) {
+        return wallet.sessionKey.signer;
+      }
+      if (!wallet.privateKey) {
+        return undefined;
+      }
+      const privateKey = requirePrivateKeyEnv(wallet);
+      return new Wallet(privateKey).address;
     }
 
     const privateKey = requirePrivateKeyEnv(wallet);
@@ -166,12 +185,8 @@ export class DefaultWalletExecutor implements WalletExecutor {
           'session_key_permission_denied',
         );
       }
-
-      return {
-        success: false,
-        error: 'session-key execution is not implemented yet.',
-        code: 'not_implemented',
-      };
+      const privateKey = requirePrivateKeyEnv(wallet);
+      return await this.#sessionKeyExecutor.execute(request, privateKey);
     }
 
     const privateKey = requirePrivateKeyEnv(wallet);
@@ -213,6 +228,69 @@ export class DefaultWalletExecutor implements WalletExecutor {
         txHash: response.hash,
       },
       text: `Broadcasted ${request.operation} transaction ${response.hash}.`,
+    };
+  }
+}
+
+export class LocalSessionKeyExecutor implements SessionKeyExecutor {
+  readonly #provider: JsonRpcProvider;
+  readonly #ledger: LimitLedger;
+  readonly #logger: Logger;
+
+  constructor(rpcUrl: string, ledger: LimitLedger, logger: Logger) {
+    this.#provider = new JsonRpcProvider(rpcUrl);
+    this.#ledger = ledger;
+    this.#logger = logger;
+  }
+
+  async execute(request: WalletExecutionRequest, privateKey: string) {
+    const signer = new Wallet(privateKey, this.#provider);
+    const expectedSigner = request.ctx.runtime.config.wallet.sessionKey?.signer;
+    if (
+      expectedSigner &&
+      signer.address.toLowerCase() !== expectedSigner.toLowerCase()
+    ) {
+      throw new CocoError(
+        'session-key signer does not match the configured signer address.',
+        'session_key_signer_mismatch',
+      );
+    }
+
+    const response = await signer.sendTransaction(
+      toTransactionRequest(request.tx),
+    );
+
+    await this.#ledger.record({
+      subjectId: getSubjectId(request),
+      toolId: request.toolId,
+      txHash: response.hash,
+      amountUsd: request.amountUsd ?? 0,
+      chainId: request.ctx.chainId,
+      mode: 'session-key',
+    });
+
+    this.#logger.info(
+      {
+        category: 'audit',
+        walletMode: 'session-key',
+        sessionId: request.ctx.sessionId,
+        userId: request.ctx.userId,
+        toolId: request.toolId,
+        operation: request.operation,
+        amountUsd: request.amountUsd,
+        chainId: request.ctx.chainId,
+        txHash: response.hash,
+      },
+      'Session-key transaction broadcasted',
+    );
+
+    return {
+      success: true,
+      data: {
+        type: 'signed_tx',
+        txHash: response.hash,
+      },
+      text: `Broadcasted session-key ${request.operation} transaction ${response.hash}.`,
     };
   }
 }

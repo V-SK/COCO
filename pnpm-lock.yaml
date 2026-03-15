@@ -41,42 +41,171 @@ importers:
 
   apps/cli:
     dependencies:
+      '@coco/connector-twitter':
+        specifier: workspace:*
+        version: link:../../packages/connector-twitter
       '@coco/connector-web':
         specifier: workspace:*
         version: link:../../packages/connector-web
       '@coco/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@coco/plugin-alerts':
+        specifier: workspace:*
+        version: link:../../packages/plugin-alerts
+      '@coco/plugin-browser':
+        specifier: workspace:*
+        version: link:../../packages/plugin-browser
+      '@coco/plugin-chain-events':
+        specifier: workspace:*
+        version: link:../../packages/plugin-chain-events
+      '@coco/plugin-computeruse':
+        specifier: workspace:*
+        version: link:../../packages/plugin-computeruse
+      '@coco/plugin-cron':
+        specifier: workspace:*
+        version: link:../../packages/plugin-cron
+      '@coco/plugin-dex-agg':
+        specifier: workspace:*
+        version: link:../../packages/plugin-dex-agg
+      '@coco/plugin-history':
+        specifier: workspace:*
+        version: link:../../packages/plugin-history
+      '@coco/plugin-knowledge':
+        specifier: workspace:*
+        version: link:../../packages/plugin-knowledge
+      '@coco/plugin-memory':
+        specifier: workspace:*
+        version: link:../../packages/plugin-memory
+      '@coco/plugin-nfa':
+        specifier: workspace:*
+        version: link:../../packages/plugin-nfa
+      '@coco/plugin-nft':
+        specifier: workspace:*
+        version: link:../../packages/plugin-nft
+      '@coco/plugin-orchestrator':
+        specifier: workspace:*
+        version: link:../../packages/plugin-orchestrator
       '@coco/plugin-price':
         specifier: workspace:*
         version: link:../../packages/plugin-price
       '@coco/plugin-scan':
         specifier: workspace:*
         version: link:../../packages/plugin-scan
+      '@coco/plugin-shell':
+        specifier: workspace:*
+        version: link:../../packages/plugin-shell
+      '@coco/plugin-sql':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sql
       '@coco/plugin-swap':
         specifier: workspace:*
         version: link:../../packages/plugin-swap
+      '@coco/plugin-tts':
+        specifier: workspace:*
+        version: link:../../packages/plugin-tts
+      '@coco/plugin-vision':
+        specifier: workspace:*
+        version: link:../../packages/plugin-vision
       '@coco/plugin-wallet':
         specifier: workspace:*
         version: link:../../packages/plugin-wallet
+      '@coco/plugin-webhook':
+        specifier: workspace:*
+        version: link:../../packages/plugin-webhook
 
-  packages/connector-web:
+  packages/connector-discord:
     dependencies:
       '@coco/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/connector-telegram:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/connector-twitter:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/connector-web:
+    dependencies:
+      '@coco/connector-twitter':
+        specifier: workspace:*
+        version: link:../connector-twitter
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      '@coco/plugin-alerts':
+        specifier: workspace:*
+        version: link:../plugin-alerts
+      '@coco/plugin-browser':
+        specifier: workspace:*
+        version: link:../plugin-browser
+      '@coco/plugin-chain-events':
+        specifier: workspace:*
+        version: link:../plugin-chain-events
+      '@coco/plugin-computeruse':
+        specifier: workspace:*
+        version: link:../plugin-computeruse
+      '@coco/plugin-cron':
+        specifier: workspace:*
+        version: link:../plugin-cron
+      '@coco/plugin-dex-agg':
+        specifier: workspace:*
+        version: link:../plugin-dex-agg
+      '@coco/plugin-history':
+        specifier: workspace:*
+        version: link:../plugin-history
+      '@coco/plugin-knowledge':
+        specifier: workspace:*
+        version: link:../plugin-knowledge
+      '@coco/plugin-memory':
+        specifier: workspace:*
+        version: link:../plugin-memory
+      '@coco/plugin-nfa':
+        specifier: workspace:*
+        version: link:../plugin-nfa
+      '@coco/plugin-nft':
+        specifier: workspace:*
+        version: link:../plugin-nft
+      '@coco/plugin-orchestrator':
+        specifier: workspace:*
+        version: link:../plugin-orchestrator
       '@coco/plugin-price':
         specifier: workspace:*
         version: link:../plugin-price
       '@coco/plugin-scan':
         specifier: workspace:*
         version: link:../plugin-scan
+      '@coco/plugin-shell':
+        specifier: workspace:*
+        version: link:../plugin-shell
+      '@coco/plugin-sql':
+        specifier: workspace:*
+        version: link:../plugin-sql
       '@coco/plugin-swap':
         specifier: workspace:*
         version: link:../plugin-swap
+      '@coco/plugin-tts':
+        specifier: workspace:*
+        version: link:../plugin-tts
+      '@coco/plugin-vision':
+        specifier: workspace:*
+        version: link:../plugin-vision
       '@coco/plugin-wallet':
         specifier: workspace:*
         version: link:../plugin-wallet
+      '@coco/plugin-webhook':
+        specifier: workspace:*
+        version: link:../plugin-webhook
       express:
         specifier: ^5.1.0
         version: 5.2.1
@@ -102,6 +231,147 @@ importers:
         specifier: ^3.24.1
         version: 3.25.1(zod@3.25.76)
 
+  packages/plugin-alerts:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-browser:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-chain-events:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      ethers:
+        specifier: ^6.13.5
+        version: 6.16.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-computeruse:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-cron:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-dex-agg:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-history:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      ethers:
+        specifier: ^6.13.5
+        version: 6.16.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-knowledge:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-memory:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-nfa:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      ethers:
+        specifier: ^6.13.5
+        version: 6.16.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-nft:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      ethers:
+        specifier: ^6.13.5
+        version: 6.16.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-ollama:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/plugin-orchestrator:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-price:
     dependencies:
       '@coco/core':
@@ -126,6 +396,27 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-shell:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-sql:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-swap:
     dependencies:
       '@coco/core':
@@ -138,6 +429,24 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/plugin-tts:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-vision:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/plugin-wallet:
     dependencies:
       '@coco/core':
@@ -146,6 +455,15 @@ importers:
       ethers:
         specifier: ^6.13.5
         version: 6.16.0
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
+  packages/plugin-webhook:
+    dependencies:
+      '@coco/core':
+        specifier: workspace:*
+        version: link:../core
       zod:
         specifier: ^3.24.1
         version: 3.25.76

@@ -1,4 +1,13 @@
-import type { LLMMessage, MemoryStore, SessionRecord, UUID } from '../types.js';
+import { randomUUID } from 'node:crypto';
+import type {
+  LLMMessage,
+  MemoryRecord,
+  MemoryStore,
+  PersistentMemoryStore,
+  RecallOptions,
+  SessionRecord,
+  UUID,
+} from '../types.js';
 
 function cloneMessages(messages: LLMMessage[]): LLMMessage[] {
   return messages.map((message) => ({
@@ -43,5 +52,72 @@ export class InMemorySessionStore implements MemoryStore {
 
   async clearSession(sessionId: UUID): Promise<void> {
     this.#sessions.delete(sessionId);
+  }
+}
+
+export class InMemoryPersistentMemoryStore
+  extends InMemorySessionStore
+  implements PersistentMemoryStore
+{
+  readonly #memories = new Map<string, MemoryRecord>();
+
+  async remember(
+    memory: Omit<
+      MemoryRecord,
+      'id' | 'createdAt' | 'accessedAt' | 'accessCount'
+    >,
+  ): Promise<MemoryRecord> {
+    const now = new Date();
+    const record: MemoryRecord = {
+      ...memory,
+      id: randomUUID(),
+      createdAt: now,
+      accessedAt: now,
+      accessCount: 0,
+    };
+    this.#memories.set(record.id, record);
+    return { ...record };
+  }
+
+  async recall(
+    query: string,
+    options: RecallOptions = {},
+  ): Promise<MemoryRecord[]> {
+    const normalizedQuery = query.trim().toLowerCase();
+    const records = Array.from(this.#memories.values())
+      .filter((record) =>
+        options.sessionId ? record.sessionId === options.sessionId : true,
+      )
+      .filter((record) =>
+        options.userId ? record.userId === options.userId : true,
+      )
+      .filter((record) => (options.type ? record.type === options.type : true))
+      .filter((record) =>
+        options.minImportance != null
+          ? record.importance >= options.minImportance
+          : true,
+      )
+      .filter((record) =>
+        normalizedQuery.length === 0
+          ? true
+          : record.content.toLowerCase().includes(normalizedQuery),
+      )
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, options.limit ?? 5)
+      .map((record) => ({
+        ...record,
+        accessCount: record.accessCount + 1,
+        accessedAt: new Date(),
+      }));
+
+    for (const record of records) {
+      this.#memories.set(record.id, record);
+    }
+
+    return records;
+  }
+
+  async forget(memoryId: string): Promise<void> {
+    this.#memories.delete(memoryId);
   }
 }

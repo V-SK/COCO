@@ -133,7 +133,11 @@ describe('DefaultWalletExecutor via runtime', () => {
     expect(record).toHaveBeenCalled();
   });
 
-  it('returns not_implemented for session-key execution', async () => {
+  it('broadcasts session-key transactions when signer config and key match', async () => {
+    process.env.COCO_TEST_PRIVATE_KEY = PRIVATE_KEY;
+    vi.spyOn(Wallet.prototype, 'sendTransaction').mockResolvedValue({
+      hash: '0xsession',
+    } as never);
     const runtime = createRuntime(
       {
         llm: {
@@ -147,8 +151,9 @@ describe('DefaultWalletExecutor via runtime', () => {
         },
         wallet: {
           mode: 'session-key',
+          privateKey: 'COCO_TEST_PRIVATE_KEY',
           sessionKey: {
-            signer: '0x0000000000000000000000000000000000001111',
+            signer: new Wallet(PRIVATE_KEY).address,
             validUntil: Math.floor(Date.now() / 1000) + 3600,
             permissions: ['transfer'],
           },
@@ -187,7 +192,68 @@ describe('DefaultWalletExecutor via runtime', () => {
       description: 'Session-key transfer',
     });
 
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      type: 'signed_tx',
+      txHash: '0xsession',
+    });
+  });
+
+  it('rejects session-key transactions outside configured permissions', async () => {
+    process.env.COCO_TEST_PRIVATE_KEY = PRIVATE_KEY;
+    const runtime = createRuntime(
+      {
+        llm: {
+          provider: 'openai',
+          baseUrl: 'https://mock-llm.local',
+          model: 'unused',
+        },
+        chain: {
+          id: 56,
+          rpcUrl: 'https://bsc-dataseed.binance.org',
+        },
+        wallet: {
+          mode: 'session-key',
+          privateKey: 'COCO_TEST_PRIVATE_KEY',
+          sessionKey: {
+            signer: new Wallet(PRIVATE_KEY).address,
+            validUntil: Math.floor(Date.now() / 1000) + 3600,
+            permissions: ['transfer'],
+          },
+          limits: {
+            perTxUsd: 500,
+            dailyUsd: 2000,
+            requireConfirmAbove: 100,
+          },
+        },
+      },
+      {
+        fetch: (async () =>
+          new Response('{}', { status: 200 })) as typeof fetch,
+        limitLedger: createNoopLedger(),
+      },
+    );
+
+    const result = await runtime.executeTransaction({
+      operation: 'swap',
+      toolId: 'swap.execute',
+      ctx: {
+        sessionId: 'session-key-2',
+        chainId: 56,
+        runtime,
+        metadata: {
+          walletConfirmed: true,
+        },
+      },
+      tx: {
+        to: '0x0000000000000000000000000000000000009999',
+        value: '1',
+      },
+      amountUsd: 50,
+      description: 'Session-key swap',
+    });
+
     expect(result.success).toBe(false);
-    expect(result.code).toBe('not_implemented');
+    expect(result.code).toBe('session_key_permission_denied');
   });
 });

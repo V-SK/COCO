@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import { createInterface } from 'node:readline/promises';
+import { twitterConnectorPlugin } from '@coco/connector-twitter';
 import { createWebConnector } from '@coco/connector-web';
 import {
   type ChatEvent,
@@ -8,10 +9,27 @@ import {
   createRuntime,
   safeJsonStringify,
 } from '@coco/core';
+import { alertsPlugin } from '@coco/plugin-alerts';
+import { browserPlugin } from '@coco/plugin-browser';
+import { chainEventsPlugin } from '@coco/plugin-chain-events';
+import { computerUsePlugin } from '@coco/plugin-computeruse';
+import { cronPlugin } from '@coco/plugin-cron';
+import { dexAggPlugin } from '@coco/plugin-dex-agg';
+import { historyPlugin } from '@coco/plugin-history';
+import { knowledgePlugin } from '@coco/plugin-knowledge';
+import { memoryPlugin } from '@coco/plugin-memory';
+import { nfaPlugin } from '@coco/plugin-nfa';
+import { nftPlugin } from '@coco/plugin-nft';
+import { orchestratorPlugin } from '@coco/plugin-orchestrator';
 import { pricePlugin } from '@coco/plugin-price';
 import { scanPlugin } from '@coco/plugin-scan';
+import { shellPlugin } from '@coco/plugin-shell';
+import { sqlPlugin } from '@coco/plugin-sql';
 import { swapPlugin } from '@coco/plugin-swap';
+import { ttsPlugin } from '@coco/plugin-tts';
+import { visionPlugin } from '@coco/plugin-vision';
 import { walletPlugin } from '@coco/plugin-wallet';
+import { webhookPlugin } from '@coco/plugin-webhook';
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -27,7 +45,8 @@ function buildBaseConfig() {
       provider: (process.env.COCO_LLM_PROVIDER ?? 'openai') as
         | 'openai'
         | 'vllm'
-        | 'anthropic',
+        | 'anthropic'
+        | 'ollama',
       baseUrl: requiredEnv('COCO_LLM_BASE_URL'),
       apiKey: process.env.COCO_LLM_API_KEY,
       model: requiredEnv('COCO_LLM_MODEL'),
@@ -66,10 +85,28 @@ function buildBaseConfig() {
 }
 
 async function registerPlugins(runtime: ReturnType<typeof createRuntime>) {
+  await runtime.registerPlugin(nfaPlugin);
   await runtime.registerPlugin(pricePlugin);
   await runtime.registerPlugin(scanPlugin);
   await runtime.registerPlugin(swapPlugin);
   await runtime.registerPlugin(walletPlugin);
+  await runtime.registerPlugin(browserPlugin);
+  await runtime.registerPlugin(shellPlugin);
+  await runtime.registerPlugin(cronPlugin);
+  await runtime.registerPlugin(memoryPlugin);
+  await runtime.registerPlugin(computerUsePlugin);
+  await runtime.registerPlugin(visionPlugin);
+  await runtime.registerPlugin(knowledgePlugin);
+  await runtime.registerPlugin(ttsPlugin);
+  await runtime.registerPlugin(sqlPlugin);
+  await runtime.registerPlugin(orchestratorPlugin);
+  await runtime.registerPlugin(twitterConnectorPlugin);
+  await runtime.registerPlugin(chainEventsPlugin);
+  await runtime.registerPlugin(alertsPlugin);
+  await runtime.registerPlugin(dexAggPlugin);
+  await runtime.registerPlugin(webhookPlugin);
+  await runtime.registerPlugin(historyPlugin);
+  await runtime.registerPlugin(nftPlugin);
 }
 
 function printEvent(event: ChatEvent) {
