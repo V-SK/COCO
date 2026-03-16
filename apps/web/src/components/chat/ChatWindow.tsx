@@ -2,6 +2,7 @@ import { useChat } from '@/hooks/useChat';
 import { useChatStore } from '@/stores/chatStore';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import { QuickActions } from './QuickActions';
 
 interface ChatWindowProps {
   backendReady: boolean;
@@ -29,6 +30,11 @@ export function ChatWindow({ backendReady, error }: ChatWindowProps) {
         streamingContent={streamingContent}
         pendingToolCall={pendingToolCall}
         onSuggestionClick={(text) => {
+          if (!disabled) sendMessage(text);
+        }}
+      />
+      <QuickActions
+        onSend={(text) => {
           if (!disabled) sendMessage(text);
         }}
       />

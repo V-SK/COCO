@@ -1,6 +1,7 @@
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
+import { Ticker } from '@/components/common/Ticker';
 import { Toast } from '@/components/common/Toast';
 import { SwapConfirmModal } from '@/components/modals/SwapConfirmModal';
 import { wagmiConfig } from '@/config/wagmi';
@@ -41,6 +42,7 @@ function AppContent() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
+        <Ticker />
         <ChatWindow backendReady={!error && !!health} error={error} />
       </div>
       <Toast />
