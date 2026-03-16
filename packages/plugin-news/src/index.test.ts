@@ -21,6 +21,9 @@ describe('plugin-news', () => {
   });
 
   it('aggregates news and produces a token sentiment summary', async () => {
+    const recentIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const recentRss = new Date(Date.now() - 30 * 60 * 1000).toUTCString();
+
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes('mock-llm.local')) {
@@ -36,7 +39,7 @@ describe('plugin-news', () => {
             {
               title: 'BNB partnership boosts ecosystem',
               url: 'https://cryptopanic.local/bnb',
-              published_at: '2026-03-14T12:00:00.000Z',
+              published_at: recentIso,
               source: { title: 'CryptoPanic' },
               currencies: [{ code: 'BNB' }],
             },
@@ -50,7 +53,7 @@ describe('plugin-news', () => {
               <title>BNB rallies on bullish inflows</title>
               <link>https://feed.local/bnb</link>
               <description>Binance coin sees a surge and buy momentum.</description>
-              <pubDate>Sat, 14 Mar 2026 12:00:00 GMT</pubDate>
+              <pubDate>${recentRss}</pubDate>
             </item>
           </channel></rss>
         `,

@@ -1,7 +1,7 @@
 import { Badge } from '@/components/common/Badge';
-import { useAccount } from 'wagmi';
 import { useSwapStore } from '@/stores/swapStore';
 import type { SwapExecuteResultLike } from '@/types/toolResults';
+import { useAccount } from 'wagmi';
 
 interface SwapQuoteCardProps {
   result: SwapExecuteResultLike;
@@ -9,10 +9,7 @@ interface SwapQuoteCardProps {
   toolParams?: unknown;
 }
 
-function getSlippage(
-  toolParams: unknown,
-  quoteSlippage?: number | null,
-) {
+function getSlippage(toolParams: unknown, quoteSlippage?: number | null) {
   if (typeof quoteSlippage === 'number') {
     return `${(quoteSlippage / 100).toFixed(2)}%`;
   }
@@ -58,13 +55,17 @@ export function SwapQuoteCard({
 
       <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">From</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            From
+          </p>
           <p className="mt-2 font-medium text-white">
             {result.quote.amountIn} {result.quote.tokenIn.symbol}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">To</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            To
+          </p>
           <p className="mt-2 font-medium text-white">
             {result.quote.amountOut} {result.quote.tokenOut.symbol}
           </p>
@@ -73,17 +74,23 @@ export function SwapQuoteCard({
 
       <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Minimum</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            Minimum
+          </p>
           <p className="mt-2 font-medium text-white">
             {result.quote.amountOutMin ?? '—'} {result.quote.tokenOut.symbol}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Slippage</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            Slippage
+          </p>
           <p className="mt-2 font-medium text-white">{slippage}</p>
         </div>
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Price Impact</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            Price Impact
+          </p>
           <p className="mt-2 font-medium text-white">{priceImpact}</p>
         </div>
       </div>

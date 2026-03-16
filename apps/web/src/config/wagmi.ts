@@ -1,6 +1,6 @@
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { bsc } from '@reown/appkit/networks';
-import { createConfig, http } from 'wagmi';
+import { http, createConfig } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 
 const projectId = import.meta.env.VITE_WC_PROJECT_ID || '';

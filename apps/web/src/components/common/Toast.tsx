@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { useUiStore } from '@/stores/uiStore';
+import { useEffect } from 'react';
 import { Badge } from './Badge';
 
 export function Toast() {

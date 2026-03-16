@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import type { Message } from '@/types';
-import { MessageBubble } from './MessageBubble';
 import { ToolLoading } from '@/components/tools/ToolLoading';
+import type { Message } from '@/types';
+import { useEffect, useRef } from 'react';
+import { MessageBubble } from './MessageBubble';
 
 interface MessageListProps {
   messages: Message[];
@@ -24,7 +24,7 @@ export function MessageList({
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, streamingContent]);
+  });
 
   if (messages.length === 0 && !streamingContent) {
     return (
@@ -37,8 +37,8 @@ export function MessageList({
             开始和 Coco 对话
           </h2>
           <p className="mt-4 text-sm leading-7 text-slate-300">
-            你可以直接询问信号、价格、风险、工具能力，后端会通过
-            connector-web 流式返回结果。
+            你可以直接询问信号、价格、风险、工具能力，后端会通过 connector-web
+            流式返回结果。
           </p>
           <div className="mt-6 space-y-2 text-left text-sm text-slate-300">
             {SUGGESTIONS.map((suggestion) => (
@@ -72,7 +72,9 @@ export function MessageList({
             isStreaming
           />
         ) : null}
-        {pendingToolCall ? <ToolLoading toolId={pendingToolCall.toolId} /> : null}
+        {pendingToolCall ? (
+          <ToolLoading toolId={pendingToolCall.toolId} />
+        ) : null}
         <div ref={endRef} />
       </div>
     </div>

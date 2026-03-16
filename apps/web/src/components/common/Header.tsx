@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useAccount, useDisconnect } from 'wagmi';
 import { walletModalEnabled } from '@/config/wagmi';
 import { openWalletModal } from '@/services/walletModal';
+import { useState } from 'react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { Badge } from './Badge';
 import { StatusDot } from './StatusDot';
 import { Tooltip } from './Tooltip';

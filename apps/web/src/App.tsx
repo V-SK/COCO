@@ -1,6 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { WagmiProvider } from 'wagmi';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { Badge } from '@/components/common/Badge';
 import { Header } from '@/components/common/Header';
@@ -10,6 +7,9 @@ import { Toast } from '@/components/common/Toast';
 import { SwapConfirmModal } from '@/components/modals/SwapConfirmModal';
 import { wagmiConfig } from '@/config/wagmi';
 import { getHealth } from '@/services/api';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { WagmiProvider } from 'wagmi';
 
 const queryClient = new QueryClient();
 
@@ -52,8 +52,8 @@ function AppContent() {
                   <p className="text-slate-300">{error}</p>
                 </div>
                 <code className="rounded-xl bg-background px-3 py-2 text-xs text-slate-200">
-                  pnpm --filter @coco/cli build &amp;&amp; node apps/cli/dist/index.js
-                  serve
+                  pnpm --filter @coco/cli build &amp;&amp; node
+                  apps/cli/dist/index.js serve
                 </code>
               </div>
             </section>

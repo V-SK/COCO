@@ -7,7 +7,9 @@ interface PriceCardProps {
 
 export function PriceCard({ result, summary }: PriceCardProps) {
   const changePercent =
-    typeof result.changePercent24h === 'number' ? result.changePercent24h : null;
+    typeof result.changePercent24h === 'number'
+      ? result.changePercent24h
+      : null;
   const changeValue =
     typeof result.change24h === 'number' ? result.change24h : null;
   const changeTone =
@@ -44,15 +46,23 @@ export function PriceCard({ result, summary }: PriceCardProps) {
       </div>
       <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">24h High</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            24h High
+          </p>
           <p className="mt-2 font-medium text-white">
-            {typeof result.high24h === 'number' ? `$${result.high24h.toFixed(4)}` : '—'}
+            {typeof result.high24h === 'number'
+              ? `$${result.high24h.toFixed(4)}`
+              : '—'}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">24h Low</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            24h Low
+          </p>
           <p className="mt-2 font-medium text-white">
-            {typeof result.low24h === 'number' ? `$${result.low24h.toFixed(4)}` : '—'}
+            {typeof result.low24h === 'number'
+              ? `$${result.low24h.toFixed(4)}`
+              : '—'}
           </p>
         </div>
       </div>

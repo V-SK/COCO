@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import type { SwapQuoteLike, UnsignedTxLike } from '@/types/toolResults';
+import { create } from 'zustand';
 
 interface PendingSwap {
   quote: SwapQuoteLike;

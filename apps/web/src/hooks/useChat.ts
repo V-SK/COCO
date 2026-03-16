@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import type { ChatConnection } from '@/services/ws';
 import { createSession } from '@/services/api';
+import type { ChatConnection } from '@/services/ws';
 import { connectChat } from '@/services/ws';
 import { useChatStore } from '@/stores/chatStore';
+import { useEffect, useRef } from 'react';
 
 let sessionPromise: Promise<string> | null = null;
 

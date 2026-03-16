@@ -1,6 +1,6 @@
+import { StatusDot } from '@/components/common/StatusDot';
 import { useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { StatusDot } from '@/components/common/StatusDot';
 
 interface ChatInputProps {
   disabled: boolean;
@@ -8,11 +8,7 @@ interface ChatInputProps {
   onSend: (message: string, walletAddress?: string) => void;
 }
 
-export function ChatInput({
-  disabled,
-  isLoading,
-  onSend,
-}: ChatInputProps) {
+export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
   const { address } = useAccount();
   const [value, setValue] = useState('');
   const isComposingRef = useRef(false);
@@ -57,18 +53,16 @@ export function ChatInput({
               nativeEvent.keyCode === 229 ||
               justFinishedComposition;
 
-            if (
-              event.key === 'Enter' &&
-              !event.shiftKey &&
-              !isImeEnter
-            ) {
+            if (event.key === 'Enter' && !event.shiftKey && !isImeEnter) {
               event.preventDefault();
               submit();
             }
           }}
           rows={1}
           placeholder={
-            disabled ? '聊天暂时不可用' : '输入消息，Enter 发送，Shift+Enter 换行'
+            disabled
+              ? '聊天暂时不可用'
+              : '输入消息，Enter 发送，Shift+Enter 换行'
           }
           className="min-h-[56px] flex-1 resize-none rounded-2xl border border-border bg-surface px-4 py-4 text-sm leading-6 text-white placeholder:text-slate-500 shadow-inner shadow-black/10 transition focus:border-primary focus:shadow-[0_0_0_3px_rgba(240,185,11,0.15)]"
         />

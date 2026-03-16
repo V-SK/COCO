@@ -1,8 +1,8 @@
+import { useSwapStore } from '@/stores/swapStore';
+import type { UnsignedTxLike } from '@/types/toolResults';
 import { useEffect } from 'react';
 import type { Address, Hex } from 'viem';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import type { UnsignedTxLike } from '@/types/toolResults';
-import { useSwapStore } from '@/stores/swapStore';
 
 function toErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
@@ -36,10 +36,7 @@ export function useSwapExecute() {
     if (txStatus === 'pending' && receiptQuery.error) {
       setTxStatus('failed');
       setTxError(
-        toErrorMessage(
-          receiptQuery.error,
-          '等待链上确认时发生错误。',
-        ),
+        toErrorMessage(receiptQuery.error, '等待链上确认时发生错误。'),
       );
     }
   }, [receiptQuery.error, setTxError, setTxStatus, txStatus]);

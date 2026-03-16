@@ -1,6 +1,6 @@
+import { StatusDot } from '@/components/common/StatusDot';
 import { useChat } from '@/hooks/useChat';
 import { useChatStore } from '@/stores/chatStore';
-import { StatusDot } from '@/components/common/StatusDot';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 
@@ -23,7 +23,9 @@ export function ChatWindow({ backendReady }: ChatWindowProps) {
           <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
             Chat
           </p>
-          <h2 className="mt-1 text-lg font-medium text-white">Coco Assistant</h2>
+          <h2 className="mt-1 text-lg font-medium text-white">
+            Coco Assistant
+          </h2>
         </div>
         <div className="text-right">
           <div className="flex justify-end">
@@ -49,7 +51,11 @@ export function ChatWindow({ backendReady }: ChatWindowProps) {
         streamingContent={streamingContent}
         pendingToolCall={pendingToolCall}
       />
-      <ChatInput disabled={disabled} isLoading={isLoading} onSend={sendMessage} />
+      <ChatInput
+        disabled={disabled}
+        isLoading={isLoading}
+        onSend={sendMessage}
+      />
     </section>
   );
 }

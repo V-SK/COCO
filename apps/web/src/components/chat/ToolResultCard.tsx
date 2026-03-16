@@ -1,12 +1,12 @@
+import { PriceCard } from '@/components/tools/PriceCard';
+import { ScanCard } from '@/components/tools/ScanCard';
+import { SwapQuoteCard } from '@/components/tools/SwapQuoteCard';
 import type { ToolResult } from '@/types';
 import {
   isPriceResultLike,
   isScanResultLike,
   isSwapExecuteResultLike,
 } from '@/types/toolResults';
-import { PriceCard } from '@/components/tools/PriceCard';
-import { ScanCard } from '@/components/tools/ScanCard';
-import { SwapQuoteCard } from '@/components/tools/SwapQuoteCard';
 
 interface ToolResultCardProps {
   toolId?: string | undefined;

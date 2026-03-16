@@ -16,7 +16,9 @@ export function MessageBubble({
   const isTool = role === 'tool';
 
   return (
-    <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
+    <div
+      className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}
+    >
       <div
         className={cn(
           'max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-lg shadow-black/10 animate-fade-in animate-slide-up sm:max-w-[80%]',

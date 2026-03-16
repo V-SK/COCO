@@ -1,8 +1,8 @@
-import { useAccount } from 'wagmi';
 import { Badge } from '@/components/common/Badge';
 import { BottomSheet } from '@/components/modals/BottomSheet';
 import { useSwapExecute } from '@/hooks/useSwapExecute';
 import { useSwapStore } from '@/stores/swapStore';
+import { useAccount } from 'wagmi';
 
 function BscScanTxLink({ txHash }: { txHash: string }) {
   return (
@@ -61,9 +61,7 @@ export function SwapConfirmModal() {
             <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
               Confirm Swap
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">
-              确认交易
-            </h2>
+            <h2 className="mt-2 text-2xl font-semibold text-white">确认交易</h2>
           </div>
           <button
             type="button"
@@ -79,13 +77,17 @@ export function SwapConfirmModal() {
 
         <div className="mt-6 grid gap-3">
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">支出</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              支出
+            </p>
             <p className="mt-2 text-lg font-medium text-white">
               {pendingSwap.quote.amountIn} {pendingSwap.quote.tokenIn.symbol}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">获得</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              获得
+            </p>
             <p className="mt-2 text-lg font-medium text-white">
               {pendingSwap.quote.amountOut} {pendingSwap.quote.tokenOut.symbol}
             </p>
@@ -94,30 +96,42 @@ export function SwapConfirmModal() {
 
         <div className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">汇率</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              汇率
+            </p>
             <p className="mt-2 text-white">
               1 {pendingSwap.quote.tokenIn.symbol} ≈ {rate}{' '}
               {pendingSwap.quote.tokenOut.symbol}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">滑点</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              滑点
+            </p>
             <p className="mt-2 text-white">{slippage}</p>
           </div>
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">价格影响</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              价格影响
+            </p>
             <p className="mt-2 text-white">{priceImpact}</p>
           </div>
           <div className="rounded-2xl border border-border bg-background px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Gas 预估</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              Gas 预估
+            </p>
             <p className="mt-2 text-white">钱包确认时计算</p>
           </div>
         </div>
 
         <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-3 text-sm text-slate-300">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">To</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            To
+          </p>
           <p className="mt-2 break-all text-white">{pendingSwap.tx.to}</p>
-          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-500">Value</p>
+          <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-500">
+            Value
+          </p>
           <p className="mt-2 text-white">{pendingSwap.tx.value ?? '0'}</p>
         </div>
 

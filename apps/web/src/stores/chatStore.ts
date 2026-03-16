@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import type { ChatEvent, Message } from '@/types';
+import { create } from 'zustand';
 
 interface ChatState {
   messages: Message[];
