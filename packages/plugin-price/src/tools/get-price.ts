@@ -16,16 +16,20 @@ export const getPriceTool: CocoTool<GetPriceParams> = {
   description: 'Get the latest market price for a token from Binance.',
   schema: GetPriceSchema,
   async execute(_ctx, params): Promise<ToolResult> {
-    const price = await priceService.getPrice(params.symbol);
+    const snapshot = await priceService.getSnapshot(params.symbol);
     const normalized = priceService.normalizeInput(params.symbol);
 
     return {
       success: true,
       data: {
         symbol: normalized,
-        price,
+        price: snapshot.price,
+        change24h: snapshot.change24h,
+        changePercent24h: snapshot.changePercent24h,
+        high24h: snapshot.high24h,
+        low24h: snapshot.low24h,
       },
-      text: `${normalized} 最新价格约为 $${price.toFixed(4)}。`,
+      text: `${normalized} 最新价格约为 $${snapshot.price.toFixed(4)}。`,
     };
   },
 };

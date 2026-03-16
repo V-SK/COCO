@@ -48,6 +48,8 @@ export interface SwapQuote {
   amountIn: string;
   amountOut: string;
   amountOutMin: string;
+  slippageBps: number | null;
+  priceImpact: number | null;
   path: string[];
   unsignedTx: Record<string, unknown>;
   amountUsd?: number | undefined;
@@ -136,6 +138,8 @@ export class PancakeSwapService {
       amountIn,
       amountOut,
       amountOutMin,
+      slippageBps,
+      priceImpact: null,
       path,
       unsignedTx: serializeTx(tx),
       amountUsd: tokenIn.priceSymbol
