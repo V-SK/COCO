@@ -11,18 +11,14 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-33.333%);
   }
 }
 
 .ticker-scroll {
-  animation: tickerScroll 20s linear infinite;
+  animation: tickerScroll 25s linear infinite;
 }
 
-@media (max-width: 639px) {
-  .ticker-scroll {
-    animation: none;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+.ticker-scroll:hover {
+  animation-play-state: paused;
 }
