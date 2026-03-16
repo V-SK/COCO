@@ -98,9 +98,13 @@ export function QuickActions({ onSend }: QuickActionsProps) {
         </button>
 
         {expanded ? (
-          <div className="mb-2 animate-fade-in space-y-2.5">
-            {ACTION_GROUPS.map((group) => (
-              <div key={group.label}>
+          <div className="mb-2 animate-slide-down space-y-2.5">
+            {ACTION_GROUPS.map((group, groupIndex) => (
+              <div
+                key={group.label}
+                className="animate-fade-in-up [animation-fill-mode:backwards]"
+                style={{ animationDelay: `${groupIndex * 50}ms` }}
+              >
                 <span className="mb-1 block text-xs text-neutral-500">
                   {group.icon} {group.label}
                 </span>

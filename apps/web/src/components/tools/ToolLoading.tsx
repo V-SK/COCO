@@ -41,9 +41,11 @@ export function ToolLoading({ toolId }: ToolLoadingProps) {
 
   return (
     <div className="flex w-full justify-start">
-      <div className="max-w-[85%] animate-fade-in rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm text-neutral-300">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-2 w-2 animate-pulse-slow rounded-full bg-primary" />
+      <div className="relative max-w-[85%] animate-fade-in overflow-hidden rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm text-neutral-300">
+        {/* Shimmer overlay */}
+        <div className="pointer-events-none absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent bg-[length:200%_100%]" />
+        <div className="relative flex items-center gap-2.5">
+          <span className="inline-flex h-2 w-2 animate-glow-pulse rounded-full bg-primary shadow-[0_0_6px_rgba(240,185,11,0.5)]" />
           <span>{label}</span>
         </div>
       </div>

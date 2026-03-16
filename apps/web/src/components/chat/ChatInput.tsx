@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 
 interface ChatInputProps {
@@ -10,8 +10,12 @@ interface ChatInputProps {
 export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
   const { address } = useAccount();
   const [value, setValue] = useState('');
+  const [focused, setFocused] = useState(false);
   const isComposingRef = useRef(false);
   const lastCompositionEndRef = useRef(0);
+
+  const handleFocus = useCallback(() => setFocused(true), []);
+  const handleBlur = useCallback(() => setFocused(false), []);
 
   function submit() {
     const content = value.trim();
@@ -27,7 +31,7 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
 
   return (
     <div className="safe-bottom px-3 pb-2 pt-1 sm:px-4">
-      <div className="mx-auto flex max-w-2xl items-end gap-0 rounded-[20px] bg-surface">
+      <div className={`mx-auto flex max-w-2xl items-end gap-0 rounded-[20px] bg-surface transition-shadow duration-200 ${focused ? 'ring-1 ring-primary/30' : ''}`}>
         <textarea
           value={value}
           disabled={disabled}
@@ -61,13 +65,15 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
           }}
           rows={1}
           placeholder={disabled ? '连接中...' : '和 Coco 聊天'}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className="min-h-[48px] flex-1 resize-none bg-transparent px-4 py-3.5 text-[15px] leading-5 text-white placeholder:text-neutral-500 focus:outline-none"
         />
         <button
           type="button"
           disabled={!canSend}
           onClick={submit}
-          className="mb-1.5 mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black transition-all hover:bg-neutral-200 active:scale-90 disabled:bg-neutral-700 disabled:text-neutral-500"
+          className="mb-1.5 mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black transition-all hover:scale-105 hover:bg-neutral-200 active:scale-90 disabled:bg-neutral-700 disabled:text-neutral-500"
           aria-label="发送消息"
         >
           {isLoading ? (

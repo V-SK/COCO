@@ -154,7 +154,7 @@ export function MessageBubble({
 
   if (isUser) {
     return (
-      <div className="flex w-full animate-fade-in justify-end">
+      <div className="flex w-full animate-slide-in-right justify-end">
         <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-3xl rounded-br-lg bg-surface px-4 py-3 text-[15px] leading-relaxed text-white">
           {content}
         </div>
@@ -163,7 +163,7 @@ export function MessageBubble({
   }
 
   return (
-    <div className="flex w-full animate-fade-in justify-start">
+    <div className="flex w-full animate-slide-in-left justify-start">
       <div
         className={cn(
           'max-w-[85%] break-words text-[15px] leading-relaxed',

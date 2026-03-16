@@ -28,17 +28,20 @@ export function MessageList({
   if (messages.length === 0 && !streamingContent) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6">
-        <CocoLogo size={56} animate />
-        <h2 className="mt-6 text-2xl font-medium tracking-tight text-white">
+        <div className="animate-scale-in">
+          <CocoLogo size={56} animate />
+        </div>
+        <h2 className="mt-6 animate-fade-in-up text-2xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
           有什么可以帮你？
         </h2>
         <div className="mt-10 flex flex-wrap justify-center gap-2">
-          {SUGGESTIONS.map((suggestion) => (
+          {SUGGESTIONS.map((suggestion, index) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => onSuggestionClick?.(suggestion)}
-              className="rounded-full border border-border px-4 py-2 text-[13px] text-neutral-400 transition-colors hover:border-neutral-500 hover:text-white active:scale-95"
+              className="animate-fade-in-up rounded-full border border-border px-4 py-2 text-[13px] text-neutral-400 transition-colors [animation-fill-mode:backwards] hover:border-neutral-500 hover:text-white active:scale-95"
+              style={{ animationDelay: `${150 + index * 50}ms` }}
             >
               {suggestion}
             </button>

@@ -27,7 +27,7 @@ function HeaderShell({
   const clearMessages = useChatStore((state) => state.clearMessages);
 
   return (
-    <header className="flex items-center justify-between px-3 py-2.5 sm:px-4">
+    <header className="flex items-center justify-between bg-background/80 px-3 py-2.5 backdrop-blur-md sm:px-4">
       <div className="flex items-center gap-1">
         {/* Hamburger menu */}
         <button
