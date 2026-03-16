@@ -1,4 +1,3 @@
-import { cn } from '@/utils/cn';
 import type { ReactNode } from 'react';
 
 interface BottomSheetProps {
@@ -13,18 +12,14 @@ export function BottomSheet({ open, onClose, children }: BottomSheetProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 animate-fade-in">
+    <div className="fixed inset-0 z-50 animate-fade-in bg-black/60 backdrop-blur-sm">
       <button
         type="button"
         aria-label="关闭弹窗"
         onClick={onClose}
         className="absolute inset-0 h-full w-full"
       />
-      <div
-        className={cn(
-          'safe-bottom absolute inset-x-0 bottom-0 animate-fade-in animate-slide-up rounded-t-[28px] border border-border bg-background-secondary p-5 shadow-2xl shadow-black/40 md:inset-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[28px]',
-        )}
-      >
+      <div className="safe-bottom absolute inset-x-0 bottom-0 animate-slide-up rounded-t-2xl bg-background-secondary p-5 shadow-2xl md:inset-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl">
         {children}
       </div>
     </div>

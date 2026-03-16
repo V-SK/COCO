@@ -14,10 +14,10 @@ export function StatusDot({ status, label }: StatusDotProps) {
           status === 'success' && 'animate-pulse-slow bg-success',
           status === 'warning' && 'animate-pulse-slow bg-warning',
           status === 'error' && 'animate-pulse-slow bg-error',
-          status === 'idle' && 'bg-slate-500',
+          status === 'idle' && 'bg-neutral-500',
         )}
       />
-      {label ? <span className="text-sm text-slate-300">{label}</span> : null}
+      {label ? <span className="text-sm text-neutral-300">{label}</span> : null}
     </span>
   );
 }

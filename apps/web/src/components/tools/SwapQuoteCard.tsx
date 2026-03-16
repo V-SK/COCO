@@ -1,4 +1,3 @@
-import { Badge } from '@/components/common/Badge';
 import { useSwapStore } from '@/stores/swapStore';
 import type { SwapExecuteResultLike } from '@/types/toolResults';
 import { useAccount } from 'wagmi';
@@ -40,65 +39,44 @@ export function SwapQuoteCard({
       : '—';
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-            Swap Quote
-          </p>
-          <h3 className="mt-1 text-lg font-semibold text-white">
+          <p className="text-xs text-neutral-400">Swap Quote</p>
+          <h3 className="mt-0.5 text-base font-semibold text-white">
             {result.quote.tokenIn.symbol} → {result.quote.tokenOut.symbol}
           </h3>
         </div>
-        <Badge variant="primary">Unsigned Tx</Badge>
+        <span className="rounded-md bg-primary/15 px-2 py-0.5 text-xs text-primary">
+          Unsigned
+        </span>
       </div>
 
-      <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            From
-          </p>
-          <p className="mt-2 font-medium text-white">
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-lg bg-background/60 px-3 py-2">
+          <p className="text-xs text-neutral-500">From</p>
+          <p className="mt-1 font-medium text-white">
             {result.quote.amountIn} {result.quote.tokenIn.symbol}
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            To
-          </p>
-          <p className="mt-2 font-medium text-white">
+        <div className="rounded-lg bg-background/60 px-3 py-2">
+          <p className="text-xs text-neutral-500">To</p>
+          <p className="mt-1 font-medium text-white">
             {result.quote.amountOut} {result.quote.tokenOut.symbol}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Minimum
-          </p>
-          <p className="mt-2 font-medium text-white">
-            {result.quote.amountOutMin ?? '—'} {result.quote.tokenOut.symbol}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Slippage
-          </p>
-          <p className="mt-2 font-medium text-white">{slippage}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            Price Impact
-          </p>
-          <p className="mt-2 font-medium text-white">{priceImpact}</p>
-        </div>
+      <div className="flex gap-2 text-xs text-neutral-400">
+        <span>Min: {result.quote.amountOutMin ?? '—'} {result.quote.tokenOut.symbol}</span>
+        <span>·</span>
+        <span>Slippage: {slippage}</span>
+        <span>·</span>
+        <span>Impact: {priceImpact}</span>
       </div>
 
       {summary ? (
-        <p className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-slate-300">
-          {summary}
-        </p>
+        <p className="text-xs leading-5 text-neutral-400">{summary}</p>
       ) : null}
 
       <button
@@ -110,7 +88,7 @@ export function SwapQuoteCard({
             tx: result.tx,
           });
         }}
-        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-black transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-black transition hover:bg-primary-hover active:scale-[0.98] disabled:opacity-40"
       >
         {isConnected ? '确认交易' : '请先连接钱包'}
       </button>

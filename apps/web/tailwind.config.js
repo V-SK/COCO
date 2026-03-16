@@ -9,10 +9,9 @@ export default {
     },
     extend: {
       animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'slide-up': 'slideUp 0.2s ease-out',
+        'fade-in': 'fadeIn 0.15s ease-out',
+        'slide-up': 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         'pulse-slow': 'pulse 2s infinite',
-        'bounce-subtle': 'bounceSubtle 0.3s ease-out',
         'toast-in': 'toastIn 0.2s ease-out',
       },
       keyframes: {
@@ -21,12 +20,8 @@ export default {
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '0%': { transform: 'translateY(16px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        bounceSubtle: {
-          '0%, 100%': { transform: 'scale(1)' },
-          '50%': { transform: 'scale(0.95)' },
         },
         toastIn: {
           '0%': { transform: 'translateY(-8px)', opacity: '0' },
@@ -40,21 +35,21 @@ export default {
           dark: '#C99A00',
         },
         background: {
-          DEFAULT: '#0D1321',
-          secondary: '#1A2332',
-          tertiary: '#243042',
+          DEFAULT: '#212121',
+          secondary: '#171717',
+          tertiary: '#2f2f2f',
         },
         surface: {
-          DEFAULT: '#1E2A3A',
-          hover: '#2A3A4D',
+          DEFAULT: '#303030',
+          hover: '#3a3a3a',
         },
         border: {
-          DEFAULT: '#2D3748',
-          light: '#4A5568',
+          DEFAULT: '#424242',
+          light: '#4e4e4e',
         },
-        success: '#00E676',
-        error: '#FF5252',
-        warning: '#FFB300',
+        success: '#34D399',
+        error: '#F87171',
+        warning: '#FBBF24',
       },
     },
   },

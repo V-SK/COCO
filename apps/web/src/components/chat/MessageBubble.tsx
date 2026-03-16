@@ -15,17 +15,24 @@ export function MessageBubble({
   const isUser = role === 'user';
   const isTool = role === 'tool';
 
+  if (isUser) {
+    return (
+      <div className="flex w-full animate-fade-in justify-end">
+        <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-3xl rounded-br-lg bg-surface px-4 py-3 text-[15px] leading-relaxed text-white">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}
-    >
+    <div className="flex w-full animate-fade-in justify-start">
       <div
         className={cn(
-          'max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-lg shadow-black/10 animate-fade-in animate-slide-up sm:max-w-[80%]',
-          isUser && 'rounded-br-sm bg-primary text-black',
-          role === 'assistant' && 'rounded-bl-sm bg-surface text-white',
-          isTool &&
-            'rounded-bl-sm border border-border bg-background-secondary text-slate-300',
+          'max-w-[85%] whitespace-pre-wrap break-words text-[15px] leading-relaxed',
+          isTool
+            ? 'rounded-2xl bg-surface px-4 py-3 text-neutral-200'
+            : 'text-neutral-100',
         )}
       >
         {isTool ? (
@@ -39,8 +46,8 @@ export function MessageBubble({
           <>
             {content}
             {isStreaming ? (
-              <span className="ml-1 inline-block animate-pulse font-medium text-primary">
-                ▌
+              <span className="ml-0.5 inline-block animate-pulse text-teal-400">
+                ▎
               </span>
             ) : null}
           </>

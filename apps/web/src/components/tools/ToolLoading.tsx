@@ -1,5 +1,3 @@
-import { Badge } from '@/components/common/Badge';
-
 interface ToolLoadingProps {
   toolId: string;
 }
@@ -15,11 +13,10 @@ export function ToolLoading({ toolId }: ToolLoadingProps) {
 
   return (
     <div className="flex w-full justify-start">
-      <div className="max-w-[90%] rounded-2xl rounded-bl-sm border border-border bg-background-secondary px-4 py-3 text-sm text-slate-300 shadow-lg shadow-black/10 animate-fade-in animate-slide-up sm:max-w-[80%]">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-2.5 w-2.5 animate-pulse-slow rounded-full bg-primary" />
+      <div className="max-w-[85%] animate-fade-in rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm text-neutral-300">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-2 w-2 animate-pulse-slow rounded-full bg-primary" />
           <span>{label}</span>
-          <Badge variant="primary">工具中</Badge>
         </div>
       </div>
     </div>

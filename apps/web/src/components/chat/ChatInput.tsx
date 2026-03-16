@@ -1,4 +1,3 @@
-import { StatusDot } from '@/components/common/StatusDot';
 import { useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
@@ -24,9 +23,11 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
     setValue('');
   }
 
+  const canSend = !disabled && value.trim().length > 0;
+
   return (
-    <div className="safe-bottom sticky bottom-0 border-t border-border bg-background-secondary/95 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
-      <div className="mx-auto flex max-w-3xl items-end gap-3">
+    <div className="safe-bottom px-3 pb-2 pt-1 sm:px-4">
+      <div className="mx-auto flex max-w-2xl items-end gap-0 rounded-[20px] bg-surface">
         <textarea
           value={value}
           disabled={disabled}
@@ -59,33 +60,24 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
             }
           }}
           rows={1}
-          placeholder={
-            disabled
-              ? '聊天暂时不可用'
-              : '输入消息，Enter 发送，Shift+Enter 换行'
-          }
-          className="min-h-[56px] flex-1 resize-none rounded-2xl border border-border bg-surface px-4 py-4 text-sm leading-6 text-white placeholder:text-slate-500 shadow-inner shadow-black/10 transition focus:border-primary focus:shadow-[0_0_0_3px_rgba(240,185,11,0.15)]"
+          placeholder={disabled ? '连接中...' : '和 Coco 聊天'}
+          className="min-h-[48px] flex-1 resize-none bg-transparent px-4 py-3.5 text-[15px] leading-5 text-white placeholder:text-neutral-500 focus:outline-none"
         />
         <button
           type="button"
-          disabled={disabled || value.trim().length === 0}
+          disabled={!canSend}
           onClick={submit}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl text-black transition hover:bg-primary-hover active:animate-bounce-subtle disabled:cursor-not-allowed disabled:opacity-50"
+          className="mb-1.5 mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black transition-all hover:bg-neutral-200 active:scale-90 disabled:bg-neutral-700 disabled:text-neutral-500"
           aria-label="发送消息"
         >
           {isLoading ? (
-            <span className="inline-flex h-5 w-5 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+            <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-black" />
           ) : (
-            '↑'
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
           )}
         </button>
-      </div>
-      <div className="mx-auto mt-3 flex max-w-3xl items-center justify-between">
-        <p className="text-xs text-slate-500">Shift+Enter 换行</p>
-        <StatusDot
-          status={disabled ? 'warning' : 'success'}
-          label={disabled ? '发送不可用' : '准备发送'}
-        />
       </div>
     </div>
   );

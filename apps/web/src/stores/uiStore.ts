@@ -2,18 +2,22 @@ import { create } from 'zustand';
 
 type ToastVariant = 'success' | 'error' | 'info';
 
-interface ToastState {
+interface UiState {
   message: string | null;
   variant: ToastVariant;
   visible: boolean;
+  sidebarOpen: boolean;
   showToast: (message: string, variant?: ToastVariant) => void;
   hideToast: () => void;
+  toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
-export const useUiStore = create<ToastState>((set) => ({
+export const useUiStore = create<UiState>((set) => ({
   message: null,
   variant: 'info',
   visible: false,
+  sidebarOpen: false,
   showToast: (message, variant = 'info') => {
     set({
       message,
@@ -23,5 +27,11 @@ export const useUiStore = create<ToastState>((set) => ({
   },
   hideToast: () => {
     set({ visible: false, message: null });
+  },
+  toggleSidebar: () => {
+    set((state) => ({ sidebarOpen: !state.sidebarOpen }));
+  },
+  setSidebarOpen: (open) => {
+    set({ sidebarOpen: open });
   },
 }));

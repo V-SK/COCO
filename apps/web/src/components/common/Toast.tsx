@@ -45,7 +45,7 @@ export function Toast() {
                 ? '错误'
                 : '提示'}
           </Badge>
-          <p className="text-sm text-slate-100">{message}</p>
+          <p className="text-sm text-neutral-100">{message}</p>
         </div>
       </div>
     </div>
