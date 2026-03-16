@@ -73,7 +73,17 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
           {isLoading ? (
             <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-black" />
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M12 19V5M5 12l7-7 7 7" />
             </svg>
           )}

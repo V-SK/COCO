@@ -108,8 +108,18 @@ export function SwapConfirmModal() {
         </div>
 
         <div className="mt-3 rounded-xl bg-background px-3 py-2.5 text-xs text-neutral-400">
-          <p>To: <span className="break-all text-neutral-300">{pendingSwap.tx.to}</span></p>
-          <p className="mt-1">Value: <span className="text-neutral-300">{pendingSwap.tx.value ?? '0'}</span></p>
+          <p>
+            To:{' '}
+            <span className="break-all text-neutral-300">
+              {pendingSwap.tx.to}
+            </span>
+          </p>
+          <p className="mt-1">
+            Value:{' '}
+            <span className="text-neutral-300">
+              {pendingSwap.tx.value ?? '0'}
+            </span>
+          </p>
         </div>
 
         {txStatus === 'success' && txHash ? (

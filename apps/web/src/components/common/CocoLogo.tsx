@@ -6,9 +6,18 @@ interface CocoLogoProps {
   animate?: boolean;
 }
 
-export function CocoLogo({ size = 32, className, animate = false }: CocoLogoProps) {
+export function CocoLogo({
+  size = 32,
+  className,
+  animate = false,
+}: CocoLogoProps) {
   return (
-    <div className={cn('relative inline-flex items-center justify-center', className)}>
+    <div
+      className={cn(
+        'relative inline-flex items-center justify-center',
+        className,
+      )}
+    >
       <img
         src="/logo-icon-transparent.png"
         alt="Coco AI"

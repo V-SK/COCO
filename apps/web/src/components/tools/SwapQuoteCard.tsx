@@ -68,7 +68,9 @@ export function SwapQuoteCard({
       </div>
 
       <div className="flex gap-2 text-xs text-neutral-400">
-        <span>Min: {result.quote.amountOutMin ?? '—'} {result.quote.tokenOut.symbol}</span>
+        <span>
+          Min: {result.quote.amountOutMin ?? '—'} {result.quote.tokenOut.symbol}
+        </span>
         <span>·</span>
         <span>Slippage: {slippage}</span>
         <span>·</span>

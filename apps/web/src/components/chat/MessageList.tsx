@@ -11,11 +11,7 @@ interface MessageListProps {
   onSuggestionClick?: (text: string) => void;
 }
 
-const SUGGESTIONS = [
-  'BNB 今天的信号',
-  '查看可用工具',
-  '当前市场概览',
-];
+const SUGGESTIONS = ['BNB 今天的信号', '查看可用工具', '当前市场概览'];
 
 export function MessageList({
   messages,

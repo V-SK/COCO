@@ -54,7 +54,17 @@ export function Sidebar() {
             className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-surface hover:text-white"
             aria-label="关闭侧边栏"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -67,7 +77,17 @@ export function Sidebar() {
             onClick={handleNewChat}
             className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm text-neutral-300 transition hover:bg-surface hover:text-white"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M12 5v14M5 12h14" />
             </svg>
             新对话
@@ -78,11 +98,17 @@ export function Sidebar() {
         <div className="flex-1 overflow-y-auto px-2 py-2">
           {messages.length > 0 ? (
             <div className="space-y-0.5">
-              <p className="px-2 pb-2 text-xs font-medium text-neutral-500">当前对话</p>
+              <p className="px-2 pb-2 text-xs font-medium text-neutral-500">
+                当前对话
+              </p>
               <div className="rounded-lg bg-surface/50 px-3 py-2.5 text-sm text-white">
-                {messages.find((m) => m.role === 'user')?.content.slice(0, 40) ??
-                  '对话进行中...'}
-                {(messages.find((m) => m.role === 'user')?.content.length ?? 0) > 40 ? '...' : ''}
+                {messages
+                  .find((m) => m.role === 'user')
+                  ?.content.slice(0, 40) ?? '对话进行中...'}
+                {(messages.find((m) => m.role === 'user')?.content.length ??
+                  0) > 40
+                  ? '...'
+                  : ''}
               </div>
             </div>
           ) : (
