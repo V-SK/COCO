@@ -2,6 +2,7 @@
   "name": "coco-desktop",
   "version": "1.0.0",
   "description": "Coco AI Desktop",
+  "repository": "https://github.com/V-SK/COCO",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
