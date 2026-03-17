@@ -1,12 +1,16 @@
 import { ChatWindow } from '@/components/chat/ChatWindow';
+import { BottomNav } from '@/components/common/BottomNav';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
 import { SplashScreen } from '@/components/common/SplashScreen';
 import { SwipeEdge } from '@/components/common/SwipeEdge';
 import { Ticker } from '@/components/common/Ticker';
 import { Toast } from '@/components/common/Toast';
+import { MarketPage } from '@/components/market/MarketPage';
 import { SwapConfirmModal } from '@/components/modals/SwapConfirmModal';
+import { TradingPage } from '@/components/trading/TradingPage';
 import { wagmiConfig } from '@/config/wagmi';
+import { useBinanceTickers } from '@/hooks/useBinanceTickers';
 import { getHealth } from '@/services/api';
 import { useUiStore } from '@/stores/uiStore';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -27,6 +31,8 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
+  const activeTab = useUiStore((s) => s.activeTab);
+  const { tickers } = useBinanceTickers();
 
   const hideSplash = useCallback(() => setShowSplash(false), []);
 
@@ -44,6 +50,17 @@ function AppContent() {
       });
   }, []);
 
+  function renderPage() {
+    switch (activeTab) {
+      case 'market':
+        return <MarketPage tickers={tickers} />;
+      case 'trading':
+        return <TradingPage />;
+      default:
+        return <ChatWindow backendReady={!error && !!health} error={error} />;
+    }
+  }
+
   return (
     <>
       {showSplash ? <SplashScreen onFinish={hideSplash} /> : null}
@@ -51,9 +68,10 @@ function AppContent() {
         <Sidebar />
         <SwipeEdge onSwipeRight={() => setSidebarOpen(true)} />
         <Header />
-        <Ticker />
-        <ChatWindow backendReady={!error && !!health} error={error} />
-        <Toast />
+        <Ticker tickers={tickers} />
+        {renderPage()}
+        {activeTab === 'chat' ? <Toast /> : null}
+        <BottomNav />
         <SwapConfirmModal />
       </div>
     </>
