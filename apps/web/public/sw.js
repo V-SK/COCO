@@ -1,4 +1,4 @@
-const CACHE_NAME = 'coco-v2';
+const CACHE_NAME = 'coco-v3';
 const PRECACHE = ['/', '/index.html'];
 
 self.addEventListener('install', (e) => {
