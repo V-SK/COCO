@@ -1,6 +1,13 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
 import { useEffect, useRef, useState } from 'react';
 
+function formatVolume(vol: number): string {
+  if (vol >= 1e12) return `$${(vol / 1e12).toFixed(1)}万亿`;
+  if (vol >= 1e8) return `$${(vol / 1e8).toFixed(1)}亿`;
+  if (vol >= 1e4) return `$${(vol / 1e4).toFixed(1)}万`;
+  return `$${vol.toFixed(0)}`;
+}
+
 function CoinIcon({ symbol }: { symbol: string }) {
   const [failed, setFailed] = useState(false);
   const src = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
@@ -136,7 +143,7 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
           <StatCard label="下跌" value={String(negative)} color="#F87171" icon="📉" delay={60} />
           <StatCard
             label="24h 量"
-            value={`$${(totalVolume / 1e9).toFixed(1)}B`}
+            value={formatVolume(totalVolume)}
             color="#F0B90B"
             icon="💰"
             delay={120}
