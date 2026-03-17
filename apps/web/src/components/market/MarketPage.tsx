@@ -1,5 +1,27 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+function CoinIcon({ symbol }: { symbol: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+
+  if (failed) {
+    return (
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+        {symbol.slice(0, 3)}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={symbol}
+      className="h-9 w-9 rounded-full bg-surface/50 object-contain p-1"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 /* ── Summary cards ── */
 function StatCard({
@@ -45,9 +67,7 @@ function TokenRow({ ticker, index }: { ticker: TickerData; index: number }) {
       style={{ animationDelay: `${80 + index * 40}ms` }}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-          {ticker.symbol.slice(0, 3)}
-        </div>
+        <CoinIcon symbol={ticker.symbol} />
         <div>
           <p className="text-sm font-semibold text-white">{ticker.symbol}</p>
           <p className="text-xs text-neutral-500">{ticker.name}</p>
