@@ -24,7 +24,7 @@ function CoinIcon({ symbol }: { symbol: string }) {
     <img
       src={src}
       alt={symbol}
-      className="h-9 w-9 rounded-full bg-surface/50 object-contain p-1"
+      className="h-9 w-9 rounded-lg object-contain"
       onError={() => setFailed(true)}
     />
   );
