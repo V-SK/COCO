@@ -1,0 +1,57 @@
+{
+  "name": "coco-desktop",
+  "version": "1.0.0",
+  "description": "Coco AI Desktop",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder --mac --win --linux"
+  },
+  "build": {
+    "appId": "com.coco.ai.desktop",
+    "productName": "Coco AI",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "web-dist/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.finance",
+      "icon": "../web/public/icon-512.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["universal"]
+        }
+      ],
+      "darkModeSupport": true
+    },
+    "win": {
+      "icon": "../web/public/icon-512.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "../web/public/icon-512.png",
+      "target": ["AppImage"],
+      "category": "Finance"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^35.2.1",
+    "electron-builder": "^26.0.13"
+  }
+}

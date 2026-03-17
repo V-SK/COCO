@@ -8,3 +8,9 @@ coverage
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Desktop build artifacts
+apps/desktop/release/
+apps/desktop/web-dist/
+apps/landing/dist/
+apps/landing/.vercel/
