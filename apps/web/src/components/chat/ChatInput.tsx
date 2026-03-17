@@ -1,3 +1,4 @@
+import { haptic } from '@/utils/haptics';
 import { useRef, useState, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 
@@ -23,6 +24,7 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
       return;
     }
 
+    haptic('medium');
     onSend(content, address);
     setValue('');
   }
@@ -64,7 +66,7 @@ export function ChatInput({ disabled, isLoading, onSend }: ChatInputProps) {
             }
           }}
           rows={1}
-          placeholder={disabled ? '连接中...' : '和 Coco 聊天'}
+          placeholder={disabled ? '⏳ 连接中…' : '和 Coco 聊天'}
           onFocus={handleFocus}
           onBlur={handleBlur}
           className="min-h-[48px] flex-1 resize-none bg-transparent px-4 py-3.5 text-[15px] leading-5 text-white placeholder:text-neutral-500 focus:outline-none"

@@ -1,3 +1,4 @@
+import { haptic } from '@/utils/haptics';
 import { useEffect, useState } from 'react';
 
 interface QuickActionsProps {
@@ -80,6 +81,7 @@ export function QuickActions({ onSend }: QuickActionsProps) {
   if (keyboardOpen) return null;
 
   function handleAction(prompt: string) {
+    haptic();
     onSend(prompt);
     setExpanded(false);
   }
@@ -90,6 +92,7 @@ export function QuickActions({ onSend }: QuickActionsProps) {
         <button
           type="button"
           onClick={() => {
+            haptic();
             setExpanded((prev) => !prev);
           }}
           className="mb-1.5 rounded-full border border-border px-3.5 py-1.5 text-xs text-neutral-400 transition-colors hover:border-primary/50 hover:text-primary"

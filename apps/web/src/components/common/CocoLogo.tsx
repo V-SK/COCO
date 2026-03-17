@@ -1,4 +1,5 @@
 import { cn } from '@/utils/cn';
+import logoIcon from '/logo-icon-transparent.png?url';
 
 interface CocoLogoProps {
   size?: number;
@@ -19,7 +20,7 @@ export function CocoLogo({
       )}
     >
       <img
-        src="/logo-icon-transparent.png"
+        src={logoIcon}
         alt="Coco AI"
         width={size}
         height={size}

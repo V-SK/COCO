@@ -5,29 +5,25 @@ const config: CapacitorConfig = {
   appName: 'Coco AI',
   webDir: 'dist',
   server: {
-    // In production, load from local files
-    // For dev, uncomment to use live server:
-    // url: 'http://192.168.1.x:5173',
-    // cleartext: true,
     androidScheme: 'https',
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
       launchAutoHide: true,
-      backgroundColor: '#000000',
+      backgroundColor: '#212121',
       showSpinner: false,
-      androidSpinnerStyle: 'small',
-      splashFullScreen: true,
-      splashImmersive: true,
+      splashFullScreen: false,
+      splashImmersive: false,
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#000000',
+      backgroundColor: '#212121',
+      overlaysWebView: false,
     },
   },
   android: {
-    backgroundColor: '#000000',
+    backgroundColor: '#212121',
     allowMixedContent: true,
     overScrollMode: 'never',
   },

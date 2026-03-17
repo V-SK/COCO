@@ -1,8 +1,8 @@
-import { CocoLogo } from '@/components/common/CocoLogo';
 import { ToolLoading } from '@/components/tools/ToolLoading';
 import type { Message } from '@/types';
 import { useEffect, useRef } from 'react';
 import { MessageBubble } from './MessageBubble';
+import welcomeImg from '/coco-welcome.jpg?url';
 
 interface MessageListProps {
   messages: Message[];
@@ -12,6 +12,22 @@ interface MessageListProps {
 }
 
 const SUGGESTIONS = ['BNB 今天的信号', '查看可用工具', '当前市场概览'];
+
+const GREETINGS = [
+  '今天想看什么币？ ☀️',
+  'BNB 生态有新动向，要聊聊吗？',
+  '有什么可以帮你？',
+  '随时准备为你服务 ✨',
+  '市场永不眠，我也是 💎',
+];
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 6) return '夜深了，还在看盘？ 🌙';
+  if (hour < 12) return '早安！新的一天，新的机会 ☀️';
+  if (hour < 18) return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  return '晚上好，来看看今天的行情？ 🌆';
+}
 
 export function MessageList({
   messages,
@@ -27,20 +43,36 @@ export function MessageList({
 
   if (messages.length === 0 && !streamingContent) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6">
-        <div className="animate-scale-in">
-          <CocoLogo size={56} animate />
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 bg-black">
+        {/* Character image */}
+        <div className="animate-scale-in relative">
+          <img
+            src={welcomeImg}
+            alt="Coco AI"
+            className="h-48 w-auto object-contain sm:h-56"
+          />
+          {/* Glow behind character */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background: 'radial-gradient(ellipse at 50% 60%, rgba(240,185,11,0.1) 0%, transparent 70%)',
+            }}
+          />
         </div>
-        <h2 className="mt-6 animate-fade-in-up text-2xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
-          有什么可以帮你？
+
+        {/* Greeting */}
+        <h2 className="mt-4 animate-fade-in-up text-xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
+          {getGreeting()}
         </h2>
-        <div className="mt-10 flex flex-wrap justify-center gap-2">
+
+        {/* Suggestions */}
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
           {SUGGESTIONS.map((suggestion, index) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => onSuggestionClick?.(suggestion)}
-              className="animate-fade-in-up rounded-full border border-border px-4 py-2 text-[13px] text-neutral-400 transition-colors [animation-fill-mode:backwards] hover:border-neutral-500 hover:text-white active:scale-95"
+              className="animate-fade-in-up rounded-full border border-primary/20 px-4 py-2 text-[13px] text-neutral-400 transition-colors [animation-fill-mode:backwards] hover:border-primary/50 hover:text-primary active:scale-95"
               style={{ animationDelay: `${150 + index * 50}ms` }}
             >
               {suggestion}

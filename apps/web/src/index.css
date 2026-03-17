@@ -35,6 +35,7 @@ html,
 body,
 #root {
   overflow-x: hidden;
+  background-color: #212121;
 }
 
 ::-webkit-scrollbar {
@@ -63,9 +64,23 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+/* Native app adjustments */
+body.native-app {
+  overscroll-behavior-y: contain;
+}
+
+/* Status bar spacer — only on native Android */
+:root {
+  --status-bar-height: 0px;
+}
+.native-status-pad {
+  padding-top: var(--status-bar-height);
 }

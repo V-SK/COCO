@@ -51,7 +51,7 @@ export function Ticker() {
   const items = [...MOCK_TICKERS, ...MOCK_TICKERS, ...MOCK_TICKERS];
 
   return (
-    <div className="relative overflow-hidden border-b border-border/30 bg-background-secondary/80">
+    <div className="relative shrink-0 overflow-hidden border-b border-border/30 bg-background-secondary/80">
       {/* Left fade */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background-secondary/80 to-transparent" />
       {/* Right fade */}

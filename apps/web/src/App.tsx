@@ -1,13 +1,16 @@
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
+import { SplashScreen } from '@/components/common/SplashScreen';
+import { SwipeEdge } from '@/components/common/SwipeEdge';
 import { Ticker } from '@/components/common/Ticker';
 import { Toast } from '@/components/common/Toast';
 import { SwapConfirmModal } from '@/components/modals/SwapConfirmModal';
 import { wagmiConfig } from '@/config/wagmi';
 import { getHealth } from '@/services/api';
+import { useUiStore } from '@/stores/uiStore';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 
 const queryClient = new QueryClient();
@@ -22,6 +25,10 @@ interface HealthState {
 function AppContent() {
   const [health, setHealth] = useState<HealthState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
+  const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
+
+  const hideSplash = useCallback(() => setShowSplash(false), []);
 
   useEffect(() => {
     getHealth()
@@ -38,16 +45,18 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="flex h-dvh bg-background text-white">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+    <>
+      {showSplash ? <SplashScreen onFinish={hideSplash} /> : null}
+      <div className="native-status-pad flex h-dvh flex-col bg-background text-white">
+        <Sidebar />
+        <SwipeEdge onSwipeRight={() => setSidebarOpen(true)} />
         <Header />
         <Ticker />
         <ChatWindow backendReady={!error && !!health} error={error} />
+        <Toast />
+        <SwapConfirmModal />
       </div>
-      <Toast />
-      <SwapConfirmModal />
-    </div>
+    </>
   );
 }
 

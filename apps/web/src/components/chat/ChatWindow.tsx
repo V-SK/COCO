@@ -20,11 +20,13 @@ export function ChatWindow({ backendReady, error }: ChatWindowProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {error ? (
-        <div className="mx-4 mt-2 rounded-xl bg-error/10 px-4 py-2.5 text-sm text-error sm:mx-6">
-          {error}
+        <div className="mx-4 mt-2 shrink-0 flex items-center gap-2.5 rounded-xl bg-neutral-800/60 px-4 py-2 sm:mx-6">
+          <span className="text-sm">⚡</span>
+          <span className="text-xs text-neutral-400">服务连接中，请稍后再试</span>
         </div>
       ) : null}
 
+      {/* Messages area — takes all remaining space, scrollable */}
       <MessageList
         messages={messages}
         streamingContent={streamingContent}
@@ -33,16 +35,20 @@ export function ChatWindow({ backendReady, error }: ChatWindowProps) {
           if (!disabled) sendMessage(text);
         }}
       />
-      <QuickActions
-        onSend={(text) => {
-          if (!disabled) sendMessage(text);
-        }}
-      />
-      <ChatInput
-        disabled={disabled}
-        isLoading={isLoading}
-        onSend={sendMessage}
-      />
+
+      {/* Quick actions + Input — always at bottom, never pushed away */}
+      <div className="shrink-0">
+        <QuickActions
+          onSend={(text) => {
+            if (!disabled) sendMessage(text);
+          }}
+        />
+        <ChatInput
+          disabled={disabled}
+          isLoading={isLoading}
+          onSend={sendMessage}
+        />
+      </div>
     </div>
   );
 }

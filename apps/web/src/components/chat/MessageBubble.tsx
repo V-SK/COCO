@@ -2,12 +2,12 @@ import type { Message } from '@/types';
 import { cn } from '@/utils/cn';
 import type { ReactNode } from 'react';
 import { ToolResultCard } from './ToolResultCard';
+import avatarImg from '/coco-avatar.jpg?url';
 
 /* ── lightweight markdown renderer ── */
 
 function processInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
-  /* Regex: bold, inline code, links — order matters for non-greedy matching */
   const inlineRe =
     /(\*\*(.+?)\*\*)|(`([^`]+?)`)|(\[([^\]]+?)\]\(([^)]+?)\))/g;
   let cursor = 0;
@@ -19,14 +19,12 @@ function processInline(text: string): ReactNode[] {
     }
 
     if (match[2] !== undefined) {
-      /* bold */
       nodes.push(
         <strong key={match.index} className="font-semibold text-white">
           {match[2]}
         </strong>,
       );
     } else if (match[4] !== undefined) {
-      /* inline code */
       nodes.push(
         <code
           key={match.index}
@@ -36,7 +34,6 @@ function processInline(text: string): ReactNode[] {
         </code>,
       );
     } else if (match[6] !== undefined && match[7] !== undefined) {
-      /* link */
       nodes.push(
         <a
           key={match.index}
@@ -61,9 +58,7 @@ function processInline(text: string): ReactNode[] {
 }
 
 function renderMarkdown(text: string): ReactNode {
-  /* Split by fenced code blocks first */
   const parts = text.split(/(```[\s\S]*?```)/g);
-
   const elements: ReactNode[] = [];
 
   for (let i = 0; i < parts.length; i++) {
@@ -71,7 +66,6 @@ function renderMarkdown(text: string): ReactNode {
     if (part === undefined) continue;
 
     if (part.startsWith('```') && part.endsWith('```')) {
-      /* fenced code block */
       const inner = part.slice(3, -3);
       const newlineIdx = inner.indexOf('\n');
       const code = newlineIdx >= 0 ? inner.slice(newlineIdx + 1) : inner;
@@ -84,7 +78,6 @@ function renderMarkdown(text: string): ReactNode {
         </pre>,
       );
     } else {
-      /* Process line-by-line for bullet lists */
       const lines = part.split('\n');
       let inList = false;
       const listItems: ReactNode[] = [];
@@ -142,11 +135,13 @@ function renderMarkdown(text: string): ReactNode {
 interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean | undefined;
+  showAvatar?: boolean;
 }
 
 export function MessageBubble({
   message,
   isStreaming = false,
+  showAvatar = true,
 }: MessageBubbleProps) {
   const { content, role, toolId, toolParams, toolResult } = message;
   const isUser = role === 'user';
@@ -163,10 +158,20 @@ export function MessageBubble({
   }
 
   return (
-    <div className="flex w-full animate-slide-in-left justify-start">
+    <div className="flex w-full animate-slide-in-left justify-start gap-2.5">
+      {/* AI Avatar */}
+      {showAvatar ? (
+        <img
+          src={avatarImg}
+          alt="Coco"
+          className="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-primary/20"
+        />
+      ) : (
+        <div className="w-8 shrink-0" />
+      )}
       <div
         className={cn(
-          'max-w-[85%] break-words text-[15px] leading-relaxed',
+          'max-w-[calc(85%-42px)] break-words text-[15px] leading-relaxed',
           isTool
             ? 'whitespace-pre-wrap rounded-2xl bg-surface px-4 py-3 text-neutral-200'
             : 'whitespace-pre-wrap text-neutral-100',
@@ -183,7 +188,7 @@ export function MessageBubble({
           <>
             {renderMarkdown(content)}
             {isStreaming ? (
-              <span className="ml-0.5 inline-block animate-pulse text-teal-400">
+              <span className="ml-0.5 inline-block animate-pulse text-primary">
                 ▎
               </span>
             ) : null}
