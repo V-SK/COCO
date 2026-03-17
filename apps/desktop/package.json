@@ -21,6 +21,11 @@
       "main.js",
       "web-dist/**/*"
     ],
+    "asarUnpack": [
+      "web-dist/**/*.jpg",
+      "web-dist/**/*.png",
+      "web-dist/**/*.svg"
+    ],
     "mac": {
       "category": "public.app-category.finance",
       "icon": "../web/public/icon-512.png",
