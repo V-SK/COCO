@@ -29,6 +29,15 @@ function getGreeting() {
   return '晚上好，来看看今天的行情？ 🌆';
 }
 
+/* Deterministic particle positions (no re-render flicker) */
+const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
+  left: 8 + (i * 37 + 13) % 84,
+  top: 15 + (i * 53 + 7) % 65,
+  size: 1.5 + (i % 3) * 1.2,
+  duration: 3 + (i % 4) * 0.8,
+  delay: (i * 0.4) % 3,
+}));
+
 export function MessageList({
   messages,
   streamingContent,
@@ -43,42 +52,105 @@ export function MessageList({
 
   if (messages.length === 0 && !streamingContent) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 bg-black">
-        {/* Character image */}
-        <div className="animate-scale-in relative">
-          <img
-            src={welcomeImg}
-            alt="Coco AI"
-            className="h-48 w-auto object-contain sm:h-56"
-          />
-          {/* Glow behind character */}
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6">
+        {/* Layered background */}
+        <div className="pointer-events-none absolute inset-0">
+          {/* Base gradient: black → deep blue-black */}
           <div
-            className="pointer-events-none absolute inset-0 -z-10"
+            className="absolute inset-0"
             style={{
-              background: 'radial-gradient(ellipse at 50% 60%, rgba(240,185,11,0.1) 0%, transparent 70%)',
+              background: 'linear-gradient(180deg, #000000 0%, #050a18 50%, #0a0e1a 100%)',
+            }}
+          />
+          {/* Gold spotlight behind character */}
+          <div
+            className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2"
+            style={{
+              width: '500px',
+              height: '500px',
+              background: 'radial-gradient(ellipse, rgba(240,185,11,0.08) 0%, rgba(240,185,11,0.03) 40%, transparent 70%)',
+              animation: 'welcomeGlow 4s ease-in-out infinite',
+            }}
+          />
+          {/* Bottom horizon glow */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-40"
+            style={{
+              background: 'radial-gradient(ellipse at 50% 100%, rgba(240,185,11,0.06) 0%, transparent 70%)',
             }}
           />
         </div>
 
-        {/* Greeting */}
-        <h2 className="mt-4 animate-fade-in-up text-xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
-          {getGreeting()}
-        </h2>
-
-        {/* Suggestions */}
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {SUGGESTIONS.map((suggestion, index) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onSuggestionClick?.(suggestion)}
-              className="animate-fade-in-up rounded-full border border-primary/20 px-4 py-2 text-[13px] text-neutral-400 transition-colors [animation-fill-mode:backwards] hover:border-primary/50 hover:text-primary active:scale-95"
-              style={{ animationDelay: `${150 + index * 50}ms` }}
-            >
-              {suggestion}
-            </button>
+        {/* Floating particles */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {PARTICLES.map((p, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${p.left}%`,
+                top: `${p.top}%`,
+                width: p.size,
+                height: p.size,
+                background: `rgba(240, 185, 11, ${0.2 + (i % 3) * 0.15})`,
+                boxShadow: `0 0 ${p.size * 2}px rgba(240, 185, 11, 0.3)`,
+                animation: `welcomeParticle ${p.duration}s ease-in-out infinite`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
           ))}
         </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Character image */}
+          <div className="animate-scale-in relative">
+            <img
+              src={welcomeImg}
+              alt="Coco AI"
+              className="h-48 w-auto object-contain sm:h-56"
+            />
+            {/* Character glow ring */}
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 scale-125"
+              style={{
+                background: 'radial-gradient(ellipse at 50% 55%, rgba(240,185,11,0.12) 0%, transparent 60%)',
+                filter: 'blur(20px)',
+              }}
+            />
+          </div>
+
+          {/* Greeting */}
+          <h2 className="mt-4 animate-fade-in-up text-xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
+            {getGreeting()}
+          </h2>
+
+          {/* Suggestions */}
+          <div className="mt-8 flex flex-wrap justify-center gap-2">
+            {SUGGESTIONS.map((suggestion, index) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => onSuggestionClick?.(suggestion)}
+                className="animate-fade-in-up rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-[13px] text-neutral-300 backdrop-blur-sm transition-all [animation-fill-mode:backwards] hover:border-primary/40 hover:bg-primary/10 hover:text-white active:scale-95"
+                style={{ animationDelay: `${150 + index * 50}ms` }}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes welcomeGlow {
+            0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+          }
+          @keyframes welcomeParticle {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 0.8; transform: translateY(-10px); }
+          }
+        `}</style>
       </div>
     );
   }
