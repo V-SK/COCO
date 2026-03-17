@@ -26,49 +26,79 @@ const SYMBOLS = [
 
 const PAIRS = SYMBOLS.map((s) => s.pair.toLowerCase());
 
+/* Try .us first (US users), fallback to .com */
+const REST_URLS = [
+  'https://api.binance.us/api/v3/ticker/24hr',
+  'https://api.binance.com/api/v3/ticker/24hr',
+];
+const WS_URLS = [
+  'wss://stream.binance.us:9443/stream',
+  'wss://stream.binance.com:9443/stream',
+];
+
+function parseTickers(data: Array<Record<string, string>>): TickerData[] {
+  const pairSet = new Set(SYMBOLS.map((s) => s.pair));
+  const filtered = data.filter((d) => pairSet.has(d.symbol));
+  const mapped = filtered.map((d) => {
+    const meta = SYMBOLS.find((s) => s.pair === d.symbol)!;
+    return {
+      symbol: meta.symbol,
+      name: meta.name,
+      price: parseFloat(d.lastPrice),
+      change24h: parseFloat(d.priceChangePercent),
+      volume24h: parseFloat(d.quoteVolume),
+      high24h: parseFloat(d.highPrice),
+      low24h: parseFloat(d.lowPrice),
+    };
+  });
+  mapped.sort((a, b) => {
+    const ai = SYMBOLS.findIndex((s) => s.symbol === a.symbol);
+    const bi = SYMBOLS.findIndex((s) => s.symbol === b.symbol);
+    return ai - bi;
+  });
+  return mapped;
+}
+
 export function useBinanceTickers() {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const wsIndexRef = useRef(0);
 
   useEffect(() => {
-    // Initial REST fetch
-    fetch('https://api.binance.com/api/v3/ticker/24hr')
-      .then((r) => r.json())
-      .then((data: Array<Record<string, string>>) => {
-        const pairSet = new Set(SYMBOLS.map((s) => s.pair));
-        const filtered = data.filter((d) => pairSet.has(d.symbol));
-        const mapped = filtered.map((d) => {
-          const meta = SYMBOLS.find((s) => s.pair === d.symbol)!;
-          return {
-            symbol: meta.symbol,
-            name: meta.name,
-            price: parseFloat(d.lastPrice),
-            change24h: parseFloat(d.priceChangePercent),
-            volume24h: parseFloat(d.quoteVolume),
-            high24h: parseFloat(d.highPrice),
-            low24h: parseFloat(d.lowPrice),
-          };
-        });
-        // Sort by SYMBOLS order
-        mapped.sort((a, b) => {
-          const ai = SYMBOLS.findIndex((s) => s.symbol === a.symbol);
-          const bi = SYMBOLS.findIndex((s) => s.symbol === b.symbol);
-          return ai - bi;
-        });
-        setTickers(mapped);
-      })
-      .catch(() => {});
+    // REST: try endpoints in order
+    async function fetchRest() {
+      for (const url of REST_URLS) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          const parsed = parseTickers(data);
+          if (parsed.length > 0) {
+            setTickers(parsed);
+            return;
+          }
+        } catch { /* try next */ }
+      }
+    }
+    void fetchRest();
 
-    // WebSocket for real-time updates
+    // WebSocket: try endpoints with fallback
     function connect() {
       const streams = PAIRS.map((p) => `${p}@miniTicker`).join('/');
-      const ws = new WebSocket(
-        `wss://stream.binance.com:9443/stream?streams=${streams}`,
-      );
+      const url = `${WS_URLS[wsIndexRef.current]}?streams=${streams}`;
+      const ws = new WebSocket(url);
 
-      ws.onopen = () => setConnected(true);
+      const openTimer = setTimeout(() => {
+        // If not connected after 5s, try next endpoint
+        ws.close();
+      }, 5000);
+
+      ws.onopen = () => {
+        clearTimeout(openTimer);
+        setConnected(true);
+      };
 
       ws.onmessage = (ev) => {
         try {
@@ -93,12 +123,15 @@ export function useBinanceTickers() {
             };
             return next;
           });
-        } catch {}
+        } catch { /* ignore parse errors */ }
       };
 
       ws.onclose = () => {
+        clearTimeout(openTimer);
         setConnected(false);
         wsRef.current = null;
+        // Try next endpoint on reconnect
+        wsIndexRef.current = (wsIndexRef.current + 1) % WS_URLS.length;
         reconnectRef.current = setTimeout(connect, 3000);
       };
 

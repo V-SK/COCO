@@ -110,8 +110,8 @@ export function MessageList({
               alt="Coco AI"
               className="h-48 w-auto object-contain sm:h-56"
               style={{
-                maskImage: 'radial-gradient(ellipse 90% 85% at 50% 45%, black 55%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 90% 85% at 50% 45%, black 55%, transparent 100%)',
+                maskImage: 'radial-gradient(ellipse 70% 75% at 50% 42%, black 40%, transparent 80%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 70% 75% at 50% 42%, black 40%, transparent 80%)',
               }}
             />
             {/* Character glow ring */}
