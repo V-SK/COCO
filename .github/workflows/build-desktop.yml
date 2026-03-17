@@ -34,7 +34,7 @@ jobs:
 
       - name: Install web dependencies
         working-directory: apps/web
-        run: npm ci
+        run: npm install
 
       - name: Build web app
         working-directory: apps/web
@@ -48,7 +48,7 @@ jobs:
 
       - name: Install desktop dependencies
         working-directory: apps/desktop
-        run: npm ci
+        run: npm install
 
       - name: Build desktop (${{ matrix.platform }})
         working-directory: apps/desktop
