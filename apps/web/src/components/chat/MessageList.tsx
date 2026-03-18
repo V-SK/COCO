@@ -2,12 +2,14 @@ import { ToolLoading } from '@/components/tools/ToolLoading';
 import type { Message } from '@/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './MessageBubble';
+import { TypingIndicator } from './TypingIndicator';
 import welcomeImg from '/coco-welcome.jpg?url';
 
 interface MessageListProps {
   messages: Message[];
   streamingContent: string;
   pendingToolCall: { toolId: string; params: unknown } | null;
+  isLoading?: boolean;
   onSuggestionClick?: (text: string) => void;
 }
 
@@ -66,6 +68,7 @@ export function MessageList({
   messages,
   streamingContent,
   pendingToolCall,
+  isLoading,
   onSuggestionClick,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -242,6 +245,9 @@ export function MessageList({
         ) : null}
         {pendingToolCall ? (
           <ToolLoading toolId={pendingToolCall.toolId} />
+        ) : null}
+        {isLoading && !streamingContent && !pendingToolCall ? (
+          <TypingIndicator />
         ) : null}
         <div ref={endRef} />
       </div>

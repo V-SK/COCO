@@ -31,6 +31,7 @@ export function ChatWindow({ backendReady, error }: ChatWindowProps) {
         messages={messages}
         streamingContent={streamingContent}
         pendingToolCall={pendingToolCall}
+        isLoading={isLoading}
         onSuggestionClick={(text) => {
           if (!disabled) sendMessage(text);
         }}
