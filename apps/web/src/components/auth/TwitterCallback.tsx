@@ -23,32 +23,38 @@ export function TwitterCallback() {
         const data = await twitterCallback(code, state);
 
         if (data.qualified) {
-          // Update auth in this window's store
+          // Save auth to localStorage (shared across tabs)
           setAuth({
             token: data.token,
             qualified: true,
             method: data.method,
             user: {
-              wallet: '', // will be filled from localStorage
+              wallet: '',
               twitter: data.twitter.username,
               avatar: data.twitter.avatar,
             },
           });
 
           setStatus('success');
-          setMessage(`验证成功！欢迎 @${data.twitter.username}`);
+          setMessage(`欢迎 @${data.twitter.username}`);
 
-          // Notify opener window and close popup
-          if (window.opener) {
-            window.opener.postMessage({ type: 'coco_twitter_auth', data }, '*');
-            setTimeout(() => window.close(), 1500);
-          }
+          // Try to notify opener (works in desktop popup)
+          try {
+            if (window.opener) {
+              window.opener.postMessage({ type: 'coco_twitter_auth', data }, '*');
+            }
+          } catch { /* ignore */ }
+
+          // Redirect to main app after short delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1500);
         } else {
           setStatus('error');
           setMessage(
             data.isFollowing
               ? '验证失败，请稍后重试'
-              : `请先关注 @COCO_DOGE 后重试`
+              : '请先关注 @COCO_DOGE 后重试'
           );
         }
       } catch (err) {
@@ -61,7 +67,7 @@ export function TwitterCallback() {
   }, [setAuth]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-6">
       <div className="text-center">
         {status === 'loading' && (
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -75,14 +81,27 @@ export function TwitterCallback() {
         <p className={`mt-4 text-sm ${status === 'error' ? 'text-red-400' : 'text-neutral-300'}`}>
           {message}
         </p>
+        {status === 'success' && (
+          <p className="mt-2 text-xs text-neutral-500">正在跳转...</p>
+        )}
         {status === 'error' && (
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="mt-4 text-xs text-neutral-500 hover:text-neutral-300"
-          >
-            关闭窗口
-          </button>
+          <div className="mt-4 space-y-2">
+            <a
+              href="https://x.com/COCO_DOGE"
+              target="_blank"
+              rel="noopener"
+              className="block text-sm text-primary hover:underline"
+            >
+              去关注 @COCO_DOGE →
+            </a>
+            <button
+              type="button"
+              onClick={() => { window.location.href = '/'; }}
+              className="text-xs text-neutral-500 hover:text-neutral-300"
+            >
+              返回首页
+            </button>
+          </div>
         )}
       </div>
     </div>
