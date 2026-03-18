@@ -1,5 +1,15 @@
 import { API_BASE } from '@/config/constants';
 
+
+export async function getNonce(address: string): Promise<{ nonce: string; message: string }> {
+  const res = await fetch(`${API_BASE}/auth/nonce`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address }),
+  });
+  if (!res.ok) throw new Error('Failed to get nonce');
+  return (await res.json()) as { nonce: string; message: string };
+}
 export interface WalletAuthResponse {
   token: string;
   qualified: boolean;
@@ -40,11 +50,11 @@ export interface AuthCheckResponse {
   };
 }
 
-export async function authWallet(address: string): Promise<WalletAuthResponse> {
+export async function authWallet(address: string, signature?: string): Promise<WalletAuthResponse> {
   const res = await fetch(`${API_BASE}/auth/wallet`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ address }),
+    body: JSON.stringify({ address, signature }),
   });
   if (!res.ok) throw new Error('Wallet auth failed');
   return (await res.json()) as WalletAuthResponse;

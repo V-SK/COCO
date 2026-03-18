@@ -1,14 +1,16 @@
 import { useAuthStore } from '@/stores/authStore';
-import { authWallet, getTwitterAuthUrl } from '@/services/authApi';
+import { authWallet, getTwitterAuthUrl, getNonce } from '@/services/authApi';
 import { openWalletModal } from '@/services/walletModal';
 import { useState, useEffect } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
+import { signMessage } from 'wagmi/actions';
+import { wagmiConfig } from '@/config/wagmi';
 import welcomeImg from '/coco-welcome.jpg?url';
 
 export function LoginPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const setAuth = useAuthStore((s) => s.setAuth);
+    const setAuth = useAuthStore((s) => s.setAuth);
 
   const [walletChecking, setWalletChecking] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
@@ -39,7 +41,11 @@ export function LoginPage() {
       setWalletChecking(true);
       setError(null);
 
-      const data = await authWallet(walletAddress);
+      // Get nonce and sign it
+      const { message } = await getNonce(walletAddress);
+      const signature = await signMessage(wagmiConfig, { message });
+
+      const data = await authWallet(walletAddress, signature);
       setWalletResult({ balance: data.balance, qualified: data.qualified });
 
       if (data.qualified) {
