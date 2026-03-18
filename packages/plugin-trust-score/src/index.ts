@@ -116,16 +116,8 @@ class TrustScoreService {
     const liquidity = await this.getLiquidityScore(token);
     const holder = await this.getHolderScore(token);
     const social = await this.getSocialScore(ctx, normalizedToken);
-    const team: ScoreModule = {
-      score: 'N/A',
-      weight: DEFAULT_WEIGHTS.team,
-      details: { status: 'N/A', reason: 'team data unavailable in phase 3' },
-    };
-    const history: ScoreModule = {
-      score: 'N/A',
-      weight: DEFAULT_WEIGHTS.history,
-      details: { status: 'N/A', reason: 'history data unavailable in phase 3' },
-    };
+    const team = await this.getTeamScore(token);
+    const history = await this.getHistoryScore(token);
 
     const modules = { contract, liquidity, holder, social, team, history };
     const weighted = Object.values(modules).filter(
@@ -259,31 +251,86 @@ class TrustScoreService {
   }
 
   async getHolderScore(token: string): Promise<ScoreModule> {
+    const apiKey = process.env['COCO_BSCSCAN_API_KEY'] ?? '';
     try {
-      const url = new URL('https://api.bscscan.com/api');
-      url.searchParams.set('module', 'account');
-      url.searchParams.set('action', 'tokentx');
-      url.searchParams.set('contractaddress', token);
-      url.searchParams.set('page', '1');
-      url.searchParams.set('offset', '50');
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('bscscan failed');
-      }
-      const payload = (await response.json()) as {
-        result?: Array<{ from?: string; to?: string; value?: string }>;
+      // Use GoPlus for holder concentration (already fetched in contract score, but we need top holders)
+      const gpUrl = `https://api.gopluslabs.io/api/v1/token_security/${this.#config.chainId}?contract_addresses=${token}`;
+      const gpRes = await fetch(gpUrl);
+      const gpData = (await gpRes.json()) as {
+        result?: Record<string, {
+          holder_count?: string;
+          holders?: Array<{ address: string; percent: string; is_locked?: number; is_contract?: number }>;
+          lp_holder_count?: string;
+          total_supply?: string;
+        }>;
       };
-      const holders = new Set(
-        (payload.result ?? [])
-          .flatMap((entry) => [entry.from, entry.to])
-          .filter((value): value is string => Boolean(value)),
-      );
-      const txCount = payload.result?.length ?? 0;
-      const score = Math.max(0, Math.min(100, holders.size * 2 + txCount / 2));
+      const entry = gpData.result?.[token.toLowerCase()] ?? gpData.result?.[token];
+      const holderCount = Number(entry?.holder_count ?? 0);
+      const topHolders = (entry?.holders ?? []).slice(0, 20);
+      const top10Pct = topHolders.slice(0, 10).reduce((sum, h) => sum + Number(h.percent || 0), 0) * 100;
+      const contractHolders = topHolders.filter(h => h.is_contract === 1).length;
+      const lockedHolders = topHolders.filter(h => h.is_locked === 1).length;
+
+      // Also try BscScan for recent transfer activity
+      let recentTxCount = 0;
+      let distinctWallets = 0;
+      if (apiKey) {
+        try {
+          const bscUrl = new URL('https://api.etherscan.io/v2/api');
+          bscUrl.searchParams.set('chainid', String(this.#config.chainId));
+          bscUrl.searchParams.set('module', 'account');
+          bscUrl.searchParams.set('action', 'tokentx');
+          bscUrl.searchParams.set('contractaddress', token);
+          bscUrl.searchParams.set('page', '1');
+          bscUrl.searchParams.set('offset', '100');
+          bscUrl.searchParams.set('sort', 'desc');
+          bscUrl.searchParams.set('apikey', apiKey);
+          const bscRes = await fetch(bscUrl);
+          const bscData = (await bscRes.json()) as {
+            result?: Array<{ from?: string; to?: string }>;
+          };
+          const wallets = new Set(
+            (bscData.result ?? [])
+              .flatMap((e) => [e.from, e.to])
+              .filter((v): v is string => Boolean(v)),
+          );
+          recentTxCount = bscData.result?.length ?? 0;
+          distinctWallets = wallets.size;
+        } catch { /* BscScan optional */ }
+      }
+
+      // Score: holder count + distribution + activity
+      let score = 0;
+      // Holder count component (max 40)
+      if (holderCount >= 10000) score += 40;
+      else if (holderCount >= 1000) score += 30;
+      else if (holderCount >= 100) score += 15;
+      else score += 5;
+      // Distribution component (max 30) — lower top10 concentration = better
+      if (top10Pct < 20) score += 30;
+      else if (top10Pct < 40) score += 20;
+      else if (top10Pct < 60) score += 10;
+      else score += 0;
+      // Activity component (max 30)
+      score += Math.min(30, recentTxCount / 3 + distinctWallets / 2);
+
       return {
-        score: Math.round(score),
+        score: Math.min(100, Math.round(score)),
         weight: DEFAULT_WEIGHTS.holder,
-        details: { distinctWallets: holders.size, sampledTransfers: txCount },
+        details: {
+          holderCount,
+          top10ConcentrationPct: Math.round(top10Pct * 100) / 100,
+          contractHolders,
+          lockedHolders,
+          recentTransfers: recentTxCount,
+          distinctWallets,
+          topHolders: topHolders.slice(0, 5).map(h => ({
+            address: h.address,
+            percent: (Number(h.percent) * 100).toFixed(2) + '%',
+            isContract: h.is_contract === 1,
+            isLocked: h.is_locked === 1,
+          })),
+        },
       };
     } catch {
       return {
@@ -323,7 +370,100 @@ class TrustScoreService {
     };
   }
 
-  buildRisks(breakdown: TrustScore['breakdown']): Risk[] {
+  async getTeamScore(token: string): Promise<ScoreModule> {
+    try {
+      // Check if contract is verified + has owner renounced from GoPlus
+      const url = `https://api.gopluslabs.io/api/v1/token_security/${this.#config.chainId}?contract_addresses=${token}`;
+      const res = await fetch(url);
+      const data = (await res.json()) as {
+        result?: Record<string, {
+          is_open_source?: string;
+          owner_address?: string;
+          creator_address?: string;
+          can_take_back_ownership?: string;
+          owner_change_balance?: string;
+        }>;
+      };
+      const entry = data.result?.[token.toLowerCase()] ?? data.result?.[token];
+      if (!entry) {
+        return { score: 'N/A', weight: DEFAULT_WEIGHTS.team, details: { status: 'N/A' } };
+      }
+      let score = 50; // base
+      if (entry.is_open_source === '1') score += 20;
+      if (entry.can_take_back_ownership === '0') score += 15;
+      if (entry.owner_change_balance === '0') score += 15;
+      // Null owner = renounced
+      if (entry.owner_address === '0x0000000000000000000000000000000000000000') score += 10;
+
+      return {
+        score: Math.min(100, score),
+        weight: DEFAULT_WEIGHTS.team,
+        details: {
+          isOpenSource: entry.is_open_source === '1',
+          ownerAddress: entry.owner_address ?? 'unknown',
+          creatorAddress: entry.creator_address ?? 'unknown',
+          ownershipRenounced: entry.owner_address === '0x0000000000000000000000000000000000000000',
+          canTakeBackOwnership: entry.can_take_back_ownership === '1',
+          ownerCanChangeBalance: entry.owner_change_balance === '1',
+        },
+      };
+    } catch {
+      return { score: 'N/A', weight: DEFAULT_WEIGHTS.team, details: { status: 'N/A' } };
+    }
+  }
+
+  async getHistoryScore(token: string): Promise<ScoreModule> {
+    try {
+      // Use DexScreener pair age + price stability
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token}`);
+      const data = (await res.json()) as {
+        pairs?: Array<{
+          pairCreatedAt?: number;
+          priceChange?: { h24?: number; h6?: number };
+          txns?: { h24?: { buys: number; sells: number } };
+          volume?: { h24?: number };
+        }>;
+      };
+      const pair = data.pairs?.[0];
+      if (!pair) {
+        return { score: 'N/A', weight: DEFAULT_WEIGHTS.history, details: { status: 'N/A' } };
+      }
+
+      const ageMs = Date.now() - (pair.pairCreatedAt ?? Date.now());
+      const ageDays = ageMs / 86_400_000;
+      const change24h = Math.abs(pair.priceChange?.h24 ?? 0);
+      const totalTxns = (pair.txns?.h24?.buys ?? 0) + (pair.txns?.h24?.sells ?? 0);
+
+      let score = 0;
+      // Age component (max 40) — older = more trustworthy
+      if (ageDays >= 90) score += 40;
+      else if (ageDays >= 30) score += 30;
+      else if (ageDays >= 7) score += 15;
+      else score += 5;
+      // Volatility component (max 30) — lower = more stable
+      if (change24h < 5) score += 30;
+      else if (change24h < 15) score += 20;
+      else if (change24h < 30) score += 10;
+      else score += 0;
+      // Activity component (max 30)
+      score += Math.min(30, totalTxns / 10);
+
+      return {
+        score: Math.min(100, Math.round(score)),
+        weight: DEFAULT_WEIGHTS.history,
+        details: {
+          ageDays: Math.round(ageDays),
+          change24hPct: pair.priceChange?.h24 ?? 0,
+          totalTxns24h: totalTxns,
+          volume24h: pair.volume?.h24 ?? 0,
+        },
+      };
+    } catch {
+      return { score: 'N/A', weight: DEFAULT_WEIGHTS.history, details: { status: 'N/A' } };
+    }
+  }
+
+    buildRisks(breakdown: TrustScore['breakdown']): Risk[] {
     const risks: Risk[] = [];
     for (const [category, module] of Object.entries(breakdown)) {
       if (module.score === 'N/A') {
