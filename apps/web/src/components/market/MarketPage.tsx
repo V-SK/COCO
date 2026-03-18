@@ -1,4 +1,5 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
+import { KlineSheet } from './KlineSheet';
 import { useEffect, useRef, useState } from 'react';
 
 function formatVolume(vol: number): string {
@@ -64,13 +65,23 @@ function StatCard({
   );
 }
 
-/* ── Token row ── */
-function TokenRow({ ticker, index }: { ticker: TickerData; index: number }) {
+/* ── Token row (clickable) ── */
+function TokenRow({
+  ticker,
+  index,
+  onClick,
+}: {
+  ticker: TickerData;
+  index: number;
+  onClick: () => void;
+}) {
   const up = ticker.change24h >= 0;
 
   return (
-    <div
-      className="animate-fade-in-up flex items-center justify-between rounded-xl border border-border/30 bg-surface/30 px-4 py-3 transition-colors hover:bg-surface/60 [animation-fill-mode:backwards]"
+    <button
+      type="button"
+      onClick={onClick}
+      className="animate-fade-in-up flex w-full items-center justify-between rounded-xl border border-border/30 bg-surface/30 px-4 py-3 text-left transition-colors hover:bg-surface/60 active:scale-[0.98] [animation-fill-mode:backwards]"
       style={{ animationDelay: `${80 + index * 40}ms` }}
     >
       <div className="flex items-center gap-3">
@@ -92,12 +103,12 @@ function TokenRow({ ticker, index }: { ticker: TickerData; index: number }) {
           {up ? '↑' : '↓'} {up ? '+' : ''}{ticker.change24h.toFixed(2)}%
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
-/* ── TradingView Chart ── */
-function TvChart({ symbol }: { symbol: string }) {
+/* ── TradingView mini chart ── */
+function TvChart({ symbol, onClick }: { symbol: string; onClick: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -122,17 +133,27 @@ function TvChart({ symbol }: { symbol: string }) {
   }, [symbol]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/30 bg-surface/30">
-      <div ref={ref} className="h-[180px] w-full" />
+    <div
+      className="cursor-pointer overflow-hidden rounded-xl border border-border/30 bg-surface/30 transition-colors hover:border-primary/30"
+      onClick={onClick}
+    >
+      <div ref={ref} className="pointer-events-none h-[180px] w-full" />
     </div>
   );
 }
 
 /* ── Main ── */
 export function MarketPage({ tickers }: { tickers: TickerData[] }) {
+  const [selectedTicker, setSelectedTicker] = useState<TickerData | null>(null);
+
   const positive = tickers.filter((t) => t.change24h >= 0).length;
   const negative = tickers.length - positive;
   const totalVolume = tickers.reduce((sum, t) => sum + t.volume24h, 0);
+
+  // Keep selected ticker's price updated
+  const liveTicker = selectedTicker
+    ? tickers.find((t) => t.symbol === selectedTicker.symbol) ?? selectedTicker
+    : null;
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
@@ -153,8 +174,14 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
         {/* Charts */}
         {tickers.length >= 2 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <TvChart symbol="BTC" />
-            <TvChart symbol="ETH" />
+            <TvChart
+              symbol="BTC"
+              onClick={() => setSelectedTicker(tickers.find((t) => t.symbol === 'BTC') ?? null)}
+            />
+            <TvChart
+              symbol="ETH"
+              onClick={() => setSelectedTicker(tickers.find((t) => t.symbol === 'ETH') ?? null)}
+            />
           </div>
         ) : null}
 
@@ -162,10 +189,23 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-neutral-400">实时行情</h3>
           {tickers.map((ticker, i) => (
-            <TokenRow key={ticker.symbol} ticker={ticker} index={i} />
+            <TokenRow
+              key={ticker.symbol}
+              ticker={ticker}
+              index={i}
+              onClick={() => setSelectedTicker(ticker)}
+            />
           ))}
         </div>
       </div>
+
+      {/* K-line sheet */}
+      {liveTicker && (
+        <KlineSheet
+          ticker={liveTicker}
+          onClose={() => setSelectedTicker(null)}
+        />
+      )}
     </div>
   );
 }
