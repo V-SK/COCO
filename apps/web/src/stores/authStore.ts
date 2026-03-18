@@ -45,13 +45,24 @@ function loadPersistedUser(): AuthUser | null {
   }
 }
 
+function loadPersistedQualified(): boolean {
+  try {
+    const token = localStorage.getItem(STORAGE_KEY);
+    if (!token) return false;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.qualified === true;
+  } catch {
+    return false;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: loadPersistedToken(),
-  qualified: false,
+  qualified: loadPersistedQualified(),
   method: null,
   balance: 0,
   user: loadPersistedUser(),
-  loading: true,
+  loading: !loadPersistedQualified(),
 
   setAuth: (data) => {
     localStorage.setItem(STORAGE_KEY, data.token);

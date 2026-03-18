@@ -42,7 +42,7 @@ function AppContent() {
   const authQualified = useAuthStore((s) => s.qualified);
   const authLoading = useAuthStore((s) => s.loading);
   const setAuth = useAuthStore((s) => s.setAuth);
-  const authLogout = useAuthStore((s) => s.logout);
+  
   const setAuthLoading = useAuthStore((s) => s.setLoading);
 
   // Check if this is a Twitter callback route
@@ -65,7 +65,9 @@ function AppContent() {
         });
       })
       .catch(() => {
-        authLogout();
+        // Don't logout on network errors — trust the persisted token
+        // Only logout if we know the token is invalid (handled by 401 in checkAuth)
+        setAuthLoading(false);
       });
   }, []);
 
