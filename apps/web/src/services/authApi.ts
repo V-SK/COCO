@@ -51,7 +51,7 @@ export async function authWallet(address: string): Promise<WalletAuthResponse> {
 }
 
 export async function getTwitterAuthUrl(wallet: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/auth/twitter?wallet=${encodeURIComponent(wallet)}`);
+  const res = await fetch(`${API_BASE}/auth/twitter${wallet ? '?wallet=' + encodeURIComponent(wallet) : ''}`);
   if (!res.ok) throw new Error('Failed to get Twitter auth URL');
   const data = (await res.json()) as TwitterAuthUrlResponse;
   return data.url;
