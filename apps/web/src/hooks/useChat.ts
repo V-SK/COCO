@@ -49,7 +49,6 @@ export function useChat() {
               timestamp: m.createdAt,
             }));
             setMessages(serverMessages);
-            // Rebuild IndexedDB from server truth
             for (const m of server) {
               await saveMessageLocal({
                 id: m.id,
@@ -95,7 +94,7 @@ export function useChat() {
     });
   }, [sessionId]);
 
-  // ── WebSocket connection ───────────────────────────────────
+  // ── WebSocket connection with auto-reconnect ───────────────
   useEffect(() => {
     if (!sessionId || connectionRef.current) {
       return undefined;
@@ -121,18 +120,30 @@ export function useChat() {
         }
       },
       onOpen: () => {
-        connectionRef.current = connection;
         setConnected(true);
+        setError(null);
       },
       onClose: () => {
-        connectionRef.current = null;
         setConnected(false);
+        // If was loading (streaming interrupted), cancel loading state
+        if (useChatStore.getState().isLoading) {
+          setLoading(false);
+          const { streamingContent, messages } = useChatStore.getState();
+          // Finalize any partial streaming content
+          if (streamingContent) {
+            useChatStore.getState().finalizeStreaming();
+          }
+        }
       },
       onError: () => {
-        connectionRef.current = null;
-        setConnected(false);
-        setLoading(false);
-        setError('WebSocket 连接失败。');
+        // Auto-reconnect handles this, don't set permanent error
+      },
+      onReconnecting: (attempt) => {
+        if (attempt <= 3) {
+          setError('连接中断，正在重连...');
+        } else {
+          setError('连接中断，请检查网络后刷新页面');
+        }
       },
     });
 
@@ -147,10 +158,7 @@ export function useChat() {
 
   function sendMessage(message: string, walletAddress?: string) {
     const content = message.trim();
-
-    if (!content) {
-      return;
-    }
+    if (!content) return;
 
     if (!connectionRef.current || !sessionId) {
       setError('聊天连接尚未就绪。');
@@ -171,9 +179,8 @@ export function useChat() {
       timestamp: Date.now(),
     }).catch(() => {});
 
-    if (connectionRef.current) {
-      connectionRef.current.send(content, walletAddress);
-    }
+    // send() now queues if disconnected, will flush on reconnect
+    connectionRef.current.send(content, walletAddress);
   }
 
   return {

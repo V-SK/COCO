@@ -1,6 +1,6 @@
 import { ToolLoading } from '@/components/tools/ToolLoading';
 import type { Message } from '@/types';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './MessageBubble';
 import welcomeImg from '/coco-welcome.jpg?url';
 
@@ -29,7 +29,7 @@ function getGreeting() {
   return '晚上好，来看看今天的行情？ 🌆';
 }
 
-/* Deterministic particle positions (no re-render flicker) */
+/* Deterministic particle positions */
 const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
   left: 8 + (i * 37 + 13) % 84,
   top: 15 + (i * 53 + 7) % 65,
@@ -38,31 +38,77 @@ const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
   delay: (i * 0.4) % 3,
 }));
 
+/** Format timestamp for display */
+function formatTime(ts: number): string {
+  const now = new Date();
+  const date = new Date(ts);
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  const time = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+  if (diffDays === 0) return time;
+  if (diffDays === 1) return `昨天 ${time}`;
+  if (diffDays < 7) return `${diffDays}天前 ${time}`;
+  return `${date.getMonth() + 1}/${date.getDate()} ${time}`;
+}
+
+/** Should we show a time divider between two messages? */
+function shouldShowTime(prev: Message | undefined, curr: Message): boolean {
+  if (!prev) return true;
+  // Show time if gap > 5 minutes
+  return curr.timestamp - prev.timestamp > 5 * 60 * 1000;
+}
+
+const SCROLL_THRESHOLD = 150; // px from bottom to consider "at bottom"
+
 export function MessageList({
   messages,
   streamingContent,
   pendingToolCall,
   onSuggestionClick,
 }: MessageListProps) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const prevMessageCount = useRef(messages.length);
 
+  // Track scroll position
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
+    setIsAtBottom(atBottom);
+    if (atBottom) setHasNewMessages(false);
+  }, []);
+
+  // Auto-scroll only when user is at bottom
   useEffect(() => {
+    if (isAtBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    } else if (messages.length > prevMessageCount.current) {
+      setHasNewMessages(true);
+    }
+    prevMessageCount.current = messages.length;
+  }, [messages, streamingContent, isAtBottom]);
+
+  function scrollToBottom() {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  });
+    setHasNewMessages(false);
+  }
 
   if (messages.length === 0 && !streamingContent) {
     return (
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6">
         {/* Layered background */}
         <div className="pointer-events-none absolute inset-0">
-          {/* Base gradient: black → deep blue-black */}
           <div
             className="absolute inset-0"
             style={{
               background: 'linear-gradient(180deg, #000000 0%, #050a18 50%, #0a0e1a 100%)',
             }}
           />
-          {/* Gold spotlight behind character */}
           <div
             className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2"
             style={{
@@ -72,7 +118,6 @@ export function MessageList({
               animation: 'welcomeGlow 4s ease-in-out infinite',
             }}
           />
-          {/* Bottom horizon glow */}
           <div
             className="absolute bottom-0 left-0 right-0 h-40"
             style={{
@@ -81,7 +126,6 @@ export function MessageList({
           />
         </div>
 
-        {/* Floating particles */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {PARTICLES.map((p, i) => (
             <div
@@ -101,9 +145,7 @@ export function MessageList({
           ))}
         </div>
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col items-center">
-          {/* Character image */}
           <div className="animate-scale-in relative">
             <img
               src={welcomeImg}
@@ -114,7 +156,6 @@ export function MessageList({
                 WebkitMaskImage: 'radial-gradient(ellipse 70% 75% at 50% 42%, black 40%, transparent 80%)',
               }}
             />
-            {/* Character glow ring */}
             <div
               className="pointer-events-none absolute inset-0 -z-10 scale-125"
               style={{
@@ -124,12 +165,10 @@ export function MessageList({
             />
           </div>
 
-          {/* Greeting */}
           <h2 className="mt-4 animate-fade-in-up text-xl font-medium tracking-tight text-white [animation-delay:100ms] [animation-fill-mode:backwards]">
             {getGreeting()}
           </h2>
 
-          {/* Suggestions */}
           <div className="mt-8 flex flex-wrap justify-center gap-2">
             {SUGGESTIONS.map((suggestion, index) => (
               <button
@@ -160,10 +199,21 @@ export function MessageList({
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-      <div className="mx-auto flex max-w-2xl flex-col gap-4">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      className="relative min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6"
+    >
+      <div className="mx-auto flex max-w-2xl flex-col gap-3">
+        {messages.map((message, i) => (
+          <div key={message.id}>
+            {shouldShowTime(messages[i - 1], message) && (
+              <div className="my-2 text-center text-[11px] text-neutral-500">
+                {formatTime(message.timestamp)}
+              </div>
+            )}
+            <MessageBubble message={message} />
+          </div>
         ))}
         {streamingContent ? (
           <MessageBubble
@@ -181,6 +231,17 @@ export function MessageList({
         ) : null}
         <div ref={endRef} />
       </div>
+
+      {/* "New messages" button */}
+      {hasNewMessages && (
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          className="fixed bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full bg-primary/90 px-4 py-2 text-xs font-medium text-black shadow-lg backdrop-blur transition-all hover:bg-primary active:scale-95"
+        >
+          ↓ 有新消息
+        </button>
+      )}
     </div>
   );
 }
