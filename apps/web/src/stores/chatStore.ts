@@ -2,6 +2,31 @@ import type { ChatEvent, Message } from '@/types';
 import { create } from 'zustand';
 
 const SESSION_KEY = 'coco-session-id';
+const SESSIONS_KEY = 'coco-sessions';
+
+export interface SessionInfo {
+  id: string;
+  title: string;
+  updatedAt: number;
+}
+
+function loadSessions(): SessionInfo[] {
+  try {
+    const raw = localStorage.getItem(SESSIONS_KEY);
+    return raw ? (JSON.parse(raw) as SessionInfo[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSessions(sessions: SessionInfo[]) {
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+}
+
+function ensureCurrentSession(sessionId: string, sessions: SessionInfo[]): SessionInfo[] {
+  if (sessions.some((s) => s.id === sessionId)) return sessions;
+  return [{ id: sessionId, title: '新对话', updatedAt: Date.now() }, ...sessions];
+}
 
 function getOrCreateSessionId(): string {
   let id = localStorage.getItem(SESSION_KEY);
@@ -33,6 +58,10 @@ interface ChatState {
   finalizeStreaming: () => void;
   clearMessages: () => void;
   setMessages: (messages: Message[]) => void;
+  sessions: SessionInfo[];
+  startNewChat: () => void;
+  switchSession: (id: string) => void;
+  updateSessionTitle: (id: string, title: string) => void;
   handleChatEvent: (event: ChatEvent) => void;
 }
 
@@ -44,6 +73,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   streamingContent: '',
   pendingToolCall: null,
+  sessions: ensureCurrentSession(getOrCreateSessionId(), loadSessions()),
 
   setSessionId: (id) => {
     localStorage.setItem(SESSION_KEY, id);
@@ -109,6 +139,42 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setMessages: (messages) => {
     set({ messages });
   },
+  startNewChat: () => {
+    const newId = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, newId);
+    const sessions = ensureCurrentSession(newId, get().sessions);
+    saveSessions(sessions);
+    set({
+      sessionId: newId,
+      messages: [],
+      streamingContent: '',
+      pendingToolCall: null,
+      error: null,
+      isLoading: false,
+      sessions,
+    });
+  },
+
+  switchSession: (id: string) => {
+    localStorage.setItem(SESSION_KEY, id);
+    set({
+      sessionId: id,
+      messages: [],
+      streamingContent: '',
+      pendingToolCall: null,
+      error: null,
+      isLoading: false,
+    });
+  },
+
+  updateSessionTitle: (id: string, title: string) => {
+    const sessions = get().sessions.map((s) =>
+      s.id === id ? { ...s, title, updatedAt: Date.now() } : s
+    );
+    saveSessions(sessions);
+    set({ sessions });
+  },
+
   handleChatEvent: (event) => {
     const {
       addMessage,

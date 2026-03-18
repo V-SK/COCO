@@ -11,18 +11,42 @@ function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins}分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}天前`;
+  return new Date(ts).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
 export function Sidebar() {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
-  const clearMessages = useChatStore((state) => state.clearMessages);
-  const messages = useChatStore((state) => state.messages);
+  const sessionId = useChatStore((state) => state.sessionId);
+  const sessions = useChatStore((state) => state.sessions);
+  const startNewChat = useChatStore((state) => state.startNewChat);
+  const switchSession = useChatStore((state) => state.switchSession);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [walletLoading, setWalletLoading] = useState(false);
 
   function handleNewChat() {
     haptic();
-    clearMessages();
+    startNewChat();
+    setSidebarOpen(false);
+  }
+
+  function handleSwitchSession(id: string) {
+    if (id === sessionId) {
+      setSidebarOpen(false);
+      return;
+    }
+    haptic();
+    switchSession(id);
     setSidebarOpen(false);
   }
 
@@ -36,6 +60,9 @@ export function Sidebar() {
       setWalletLoading(false);
     }
   }
+
+  // Sort sessions by updatedAt descending
+  const sortedSessions = [...sessions].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (
     <>
@@ -71,17 +98,7 @@ export function Sidebar() {
             className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-surface hover:text-white"
             aria-label="关闭侧边栏"
           >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -94,17 +111,7 @@ export function Sidebar() {
             onClick={handleNewChat}
             className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm text-neutral-300 transition hover:bg-surface hover:text-white"
           >
-            <svg
-              aria-hidden="true"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
             新对话
@@ -113,20 +120,34 @@ export function Sidebar() {
 
         {/* Conversation history */}
         <div className="flex-1 overflow-y-auto px-2 py-2">
-          {messages.length > 0 ? (
+          {sortedSessions.length > 0 ? (
             <div className="space-y-0.5">
               <p className="px-2 pb-2 text-xs font-medium text-neutral-500">
-                当前对话
+                对话记录
               </p>
-              <div className="rounded-lg bg-surface/50 px-3 py-2.5 text-sm text-white">
-                {messages
-                  .find((m) => m.role === 'user')
-                  ?.content.slice(0, 40) ?? '对话进行中...'}
-                {(messages.find((m) => m.role === 'user')?.content.length ??
-                  0) > 40
-                  ? '...'
-                  : ''}
-              </div>
+              {sortedSessions.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleSwitchSession(s.id)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                    s.id === sessionId
+                      ? 'bg-primary/10 text-white'
+                      : 'text-neutral-400 hover:bg-surface/50 hover:text-neutral-200'
+                  }`}
+                >
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{s.title}</p>
+                    <p className="text-[10px] text-neutral-600">{timeAgo(s.updatedAt)}</p>
+                  </div>
+                  {s.id === sessionId && (
+                    <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  )}
+                </button>
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -136,9 +157,8 @@ export function Sidebar() {
           )}
         </div>
 
-        {/* Bottom section — wallet + version */}
+        {/* Bottom section */}
         <div className="border-t border-border px-3 py-3 space-y-2">
-          {/* Wallet */}
           {isConnected && address ? (
             <div className="flex items-center justify-between">
               <button
@@ -173,7 +193,6 @@ export function Sidebar() {
             </button>
           ) : null}
 
-          {/* Settings placeholder */}
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs text-neutral-500 transition hover:bg-surface hover:text-neutral-300"
@@ -185,7 +204,6 @@ export function Sidebar() {
             设置
           </button>
 
-          {/* Version */}
           <div className="flex items-center gap-2 px-2 py-1 text-xs text-neutral-600">
             <div className="h-1.5 w-1.5 rounded-full bg-success" />
             Coco AI v1.2

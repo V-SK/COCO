@@ -86,6 +86,11 @@ export function useChat() {
     };
   }, [sessionId, setMessages]);
 
+  // Reset restore flag when session changes
+  useEffect(() => {
+    restoredRef.current = false;
+  }, [sessionId]);
+
   // ── Confirm session on server ──────────────────────────────
   useEffect(() => {
     if (!sessionId) return;
@@ -96,7 +101,12 @@ export function useChat() {
 
   // ── WebSocket connection with auto-reconnect ───────────────
   useEffect(() => {
-    if (!sessionId || connectionRef.current) {
+    // Close previous connection when session changes
+    if (connectionRef.current) {
+      connectionRef.current.close();
+      connectionRef.current = null;
+    }
+    if (!sessionId) {
       return undefined;
     }
 
@@ -167,6 +177,13 @@ export function useChat() {
 
     const msgId = crypto.randomUUID();
     addUserMessage(content);
+
+    // Auto-title session from first user message
+    const state = useChatStore.getState();
+    const userMsgs = state.messages.filter((m) => m.role === 'user');
+    if (userMsgs.length === 0) {
+      state.updateSessionTitle(sessionId, content.slice(0, 30));
+    }
     setError(null);
     setLoading(true);
 
