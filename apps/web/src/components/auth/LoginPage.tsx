@@ -1,13 +1,12 @@
 import { useAuthStore } from '@/stores/authStore';
 import { authWallet, getTwitterAuthUrl } from '@/services/authApi';
-import { useState } from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { openWalletModal } from '@/services/walletModal';
+import { useState, useEffect } from 'react';
+import { useAccount, useDisconnect } from 'wagmi';
 import welcomeImg from '/coco-welcome.jpg?url';
 
 export function LoginPage() {
   const { address, isConnected } = useAccount();
-  const { connectAsync } = useConnect();
   const { disconnect } = useDisconnect();
   const setAuth = useAuthStore((s) => s.setAuth);
 
@@ -16,23 +15,30 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [twitterLoading, setTwitterLoading] = useState(false);
 
+  // When wallet connects via modal, auto-check
+  useEffect(() => {
+    if (isConnected && address && step === 'connect') {
+      handleVerify(address);
+    }
+  }, [isConnected, address]);
+
   async function handleConnect() {
     try {
       setError(null);
+      const opened = await openWalletModal('Connect');
+      if (!opened) {
+        setError('钱包连接不可用，请安装 MetaMask 或使用 WalletConnect');
+      }
+      // The actual verification happens in the useEffect above when address changes
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '连接失败');
+    }
+  }
+
+  async function handleVerify(walletAddress: string) {
+    try {
       setStep('checking');
-
-      let walletAddress = address;
-
-      if (!isConnected) {
-        const result = await connectAsync({ connector: injected() });
-        walletAddress = result.accounts[0];
-      }
-
-      if (!walletAddress) {
-        setError('无法获取钱包地址');
-        setStep('connect');
-        return;
-      }
+      setError(null);
 
       const data = await authWallet(walletAddress);
       setBalance(data.balance);
@@ -58,7 +64,7 @@ export function LoginPage() {
       });
       setStep('unqualified');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '连接失败');
+      setError(err instanceof Error ? err.message : '验证失败');
       setStep('connect');
     }
   }
@@ -69,7 +75,6 @@ export function LoginPage() {
       setTwitterLoading(true);
       setError(null);
       const url = await getTwitterAuthUrl(address);
-      // Open in popup for better PWA experience
       const width = 500;
       const height = 700;
       const left = window.screenX + (window.innerWidth - width) / 2;
@@ -182,6 +187,15 @@ export function LoginPage() {
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
               {twitterLoading ? '跳转中...' : '用 Twitter 验证关注'}
+            </button>
+
+            {/* Re-check balance */}
+            <button
+              type="button"
+              onClick={() => address && handleVerify(address)}
+              className="w-full text-center text-xs text-primary/60 hover:text-primary"
+            >
+              🔄 重新检查余额
             </button>
 
             {/* Disconnect */}
