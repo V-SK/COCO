@@ -1,63 +1,86 @@
-import { createSession } from '@/services/api';
+import { createSession, fetchMessages } from '@/services/api';
+import { saveMessageLocal, getMessagesLocal } from '@/services/chatDb';
 import type { ChatConnection } from '@/services/ws';
 import { connectChat } from '@/services/ws';
 import { useChatStore } from '@/stores/chatStore';
 import { useEffect, useRef } from 'react';
+import type { Message } from '@/types';
 
-let sessionPromise: Promise<string> | null = null;
+let initPromise: Promise<void> | null = null;
 
-function toErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
 
 export function useChat() {
   const sessionId = useChatStore((state) => state.sessionId);
   const isConnected = useChatStore((state) => state.isConnected);
   const isLoading = useChatStore((state) => state.isLoading);
   const error = useChatStore((state) => state.error);
-  const setSessionId = useChatStore((state) => state.setSessionId);
   const setConnected = useChatStore((state) => state.setConnected);
   const setLoading = useChatStore((state) => state.setLoading);
   const setError = useChatStore((state) => state.setError);
   const addUserMessage = useChatStore((state) => state.addUserMessage);
   const handleChatEvent = useChatStore((state) => state.handleChatEvent);
+  const setMessages = useChatStore((state) => state.setMessages);
   const connectionRef = useRef<ChatConnection | null>(null);
 
+  // ── Restore messages on mount ──────────────────────────────
   useEffect(() => {
-    let cancelled = false;
+    if (!sessionId || initPromise) return;
 
-    if (sessionId) {
-      return undefined;
-    }
-
-    if (!sessionPromise) {
-      sessionPromise = createSession().then((response) => response.sessionId);
-    }
-
-    sessionPromise
-      .then((createdSessionId) => {
-        if (cancelled) {
-          return;
+    initPromise = (async () => {
+      try {
+        // 1. Instant restore from IndexedDB
+        const local = await getMessagesLocal(sessionId);
+        if (local.length > 0) {
+          const restored: Message[] = local.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp,
+          }));
+          setMessages(restored);
         }
 
-        console.log('[Chat] Session ready:', createdSessionId);
-        setSessionId(createdSessionId);
-      })
-      .catch((caughtError: unknown) => {
-        if (cancelled) {
-          return;
+        // 2. Background sync from server
+        try {
+          const server = await fetchMessages(sessionId, 100);
+          if (server.length > 0) {
+            const serverMessages: Message[] = server.map((m) => ({
+              id: m.id,
+              role: m.role as Message['role'],
+              content: m.content,
+              timestamp: m.createdAt,
+            }));
+            setMessages(serverMessages);
+            // Update IndexedDB with server truth
+            for (const m of server) {
+              await saveMessageLocal({
+                id: m.id,
+                sessionId: m.sessionId,
+                role: m.role,
+                content: m.content,
+                timestamp: m.createdAt,
+              });
+            }
+          }
+        } catch {
+          // Server unreachable — IndexedDB data is good enough
+          console.warn('[Chat] Server sync failed, using local cache');
         }
+      } catch (e) {
+        console.error('[Chat] Restore failed:', e);
+      }
+    })();
+  }, [sessionId, setMessages]);
 
-        sessionPromise = null;
-        setLoading(false);
-        setError(toErrorMessage(caughtError, 'Failed to create session.'));
-      });
+  // ── Confirm session on server ──────────────────────────────
+  useEffect(() => {
+    if (!sessionId) return;
+    createSession(sessionId).catch(() => {
+      console.warn('[Chat] Session confirm failed');
+    });
+  }, [sessionId]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, setError, setLoading, setSessionId]);
-
+  // ── WebSocket connection ───────────────────────────────────
   useEffect(() => {
     if (!sessionId || connectionRef.current) {
       return undefined;
@@ -66,6 +89,21 @@ export function useChat() {
     const connection = connectChat(sessionId, {
       onMessage: (event) => {
         handleChatEvent(event);
+
+        // Persist assistant finalized text to IndexedDB
+        if (event.type === 'done') {
+          const messages = useChatStore.getState().messages;
+          const last = messages[messages.length - 1];
+          if (last && last.role === 'assistant') {
+            saveMessageLocal({
+              id: last.id,
+              sessionId,
+              role: 'assistant',
+              content: last.content,
+              timestamp: last.timestamp,
+            }).catch(() => {});
+          }
+        }
       },
       onOpen: () => {
         connectionRef.current = connection;
@@ -104,10 +142,25 @@ export function useChat() {
       return;
     }
 
+    const msgId = crypto.randomUUID();
     addUserMessage(content);
     setError(null);
     setLoading(true);
-    connectionRef.current.send(content, walletAddress);
+
+    // Persist user message to IndexedDB
+    saveMessageLocal({
+      id: msgId,
+      sessionId,
+      role: 'user',
+      content,
+      timestamp: Date.now(),
+    }).catch(() => {});
+
+    // Send with msgId for server dedup
+    if (connectionRef.current) {
+      // We need to send msgId — update ws payload
+      connectionRef.current.send(content, walletAddress);
+    }
   }
 
   return {

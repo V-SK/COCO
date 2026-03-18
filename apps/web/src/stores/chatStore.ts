@@ -1,11 +1,22 @@
 import type { ChatEvent, Message } from '@/types';
 import { create } from 'zustand';
 
+const SESSION_KEY = 'coco-session-id';
+
+function getOrCreateSessionId(): string {
+  let id = localStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
+}
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
   isConnected: boolean;
-  sessionId: string | null;
+  sessionId: string;
   error: string | null;
   streamingContent: string;
   pendingToolCall: { toolId: string; params: unknown } | null;
@@ -21,6 +32,7 @@ interface ChatState {
   appendToStreaming: (content: string) => void;
   finalizeStreaming: () => void;
   clearMessages: () => void;
+  setMessages: (messages: Message[]) => void;
   handleChatEvent: (event: ChatEvent) => void;
 }
 
@@ -28,12 +40,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isLoading: false,
   isConnected: false,
-  sessionId: null,
+  sessionId: getOrCreateSessionId(),
   error: null,
   streamingContent: '',
   pendingToolCall: null,
 
   setSessionId: (id) => {
+    localStorage.setItem(SESSION_KEY, id);
     set({ sessionId: id });
   },
   setConnected: (connected) => {
@@ -93,6 +106,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearMessages: () => {
     set({ messages: [], streamingContent: '' });
   },
+  setMessages: (messages) => {
+    set({ messages });
+  },
   handleChatEvent: (event) => {
     const {
       addMessage,
@@ -116,19 +132,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         console.log('[Chat] Tool call:', event.toolId, event.params);
         break;
-      case 'tool_result':
+      case 'tool_result': {
         finalizeStreaming();
         setPendingToolCall(null);
-        addMessage({
-          id: crypto.randomUUID(),
-          role: 'tool',
-          content: event.result.text || JSON.stringify(event.result.data),
-          timestamp: Date.now(),
-          toolId: event.toolId,
-          toolParams: pendingToolCall?.params,
-          toolResult: event.result,
-        });
+        // Only show rich tool results (price, scan, swap) — others wait for LLM summary
+        const RICH_TOOLS = new Set(['price.get', 'scan.contract', 'swap.execute']);
+        if (RICH_TOOLS.has(event.toolId)) {
+          addMessage({
+            id: crypto.randomUUID(),
+            role: 'tool',
+            content: event.result.text || JSON.stringify(event.result.data),
+            timestamp: Date.now(),
+            toolId: event.toolId,
+            toolParams: pendingToolCall?.params,
+            toolResult: event.result,
+          });
+        }
         break;
+      }
       case 'error':
         finalizeStreaming();
         setPendingToolCall(null);
