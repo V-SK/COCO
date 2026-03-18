@@ -36,6 +36,9 @@ async function loadAppKit(): Promise<AppKitInstance | null> {
         },
         features: {
           analytics: false,
+          email: false,
+          socials: false,
+          emailShowWallets: false,
         },
       }) as AppKitInstance;
     })();
