@@ -128,7 +128,7 @@ export function useChat() {
         // If was loading (streaming interrupted), cancel loading state
         if (useChatStore.getState().isLoading) {
           setLoading(false);
-          const { streamingContent, messages } = useChatStore.getState();
+          const { streamingContent } = useChatStore.getState();
           // Finalize any partial streaming content
           if (streamingContent) {
             useChatStore.getState().finalizeStreaming();
