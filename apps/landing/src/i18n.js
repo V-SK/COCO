@@ -79,6 +79,21 @@ export const translations = {
     contract_listed: "已上线：",
 
     // Community
+
+    // Download
+    dl_title: "下载 Coco",
+    dl_subtitle: "选择你的平台，随时随地交易",
+    dl_android: "Android",
+    dl_android_desc: "APK 直接安装",
+    dl_macos: "macOS",
+    dl_macos_desc: "Universal (Intel + Apple Silicon)",
+    dl_windows: "Windows",
+    dl_windows_desc: "即将推出",
+    dl_ios: "iOS",
+    dl_ios_desc: "添加到主屏幕",
+    dl_ios_step1: "用 Safari 打开 app.cocobnb.meme",
+    dl_ios_step2: "点击分享按钮 ⬆️",
+    dl_ios_step3: "选择「添加到主屏幕」",
     community_title: "加入社区",
 
     // Footer
@@ -164,6 +179,21 @@ export const translations = {
     contract_listed: "Listed on:",
 
     // Community
+
+    // Download
+    dl_title: "Download Coco",
+    dl_subtitle: "Choose your platform, trade anywhere",
+    dl_android: "Android",
+    dl_android_desc: "APK direct install",
+    dl_macos: "macOS",
+    dl_macos_desc: "Universal (Intel + Apple Silicon)",
+    dl_windows: "Windows",
+    dl_windows_desc: "Coming soon",
+    dl_ios: "iOS",
+    dl_ios_desc: "Add to Home Screen",
+    dl_ios_step1: "Open app.cocobnb.meme in Safari",
+    dl_ios_step2: "Tap the Share button ⬆️",
+    dl_ios_step3: "Select \"Add to Home Screen\"",
     community_title: "Join the Community",
 
     // Footer

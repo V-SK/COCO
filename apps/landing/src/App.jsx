@@ -317,6 +317,85 @@ function Contract() {
   );
 }
 
+// ─── Download ───
+function Download() {
+  const { lang } = useLang();
+  const [showIos, setShowIos] = useState(false);
+  const cards = [
+    {
+      icon: '📱', platform: t(lang, 'dl_ios'), desc: t(lang, 'dl_ios_desc'),
+      action: 'modal', color: 'from-gray-500/20 to-gray-600/10',
+    },
+    {
+      icon: '🤖', platform: t(lang, 'dl_android'), desc: t(lang, 'dl_android_desc'),
+      action: 'https://github.com/V-SK/COCO/releases/download/v1.1.0/coco-v1.1.0.apk',
+      color: 'from-green-500/20 to-green-600/10',
+    },
+    {
+      icon: '🍎', platform: t(lang, 'dl_macos'), desc: t(lang, 'dl_macos_desc'),
+      action: 'https://github.com/V-SK/COCO/releases/download/v1.1.0/Coco-AI-1.1.0-universal.dmg',
+      color: 'from-blue-500/20 to-blue-600/10',
+    },
+    {
+      icon: '🪟', platform: t(lang, 'dl_windows'), desc: t(lang, 'dl_windows_desc'),
+      action: null, color: 'from-purple-500/20 to-purple-600/10',
+    },
+  ];
+  return (
+    <Section id="download">
+      {(vis) => (
+        <>
+          <h2 className={"text-3xl md:text-4xl font-bold text-center gold-text mb-4 fade-in-up " + (vis ? 'visible' : '')}>
+            {t(lang, 'dl_title')}
+          </h2>
+          <p className={"text-center text-gray-500 mb-12 fade-in-up " + (vis ? 'visible' : '')} style={{ transitionDelay: '0.1s' }}>
+            {t(lang, 'dl_subtitle')}
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {cards.map((c, i) => (
+              <div key={i}
+                className={"fade-in-up " + (vis ? 'visible' : '') + " card-glow border border-dark-border rounded-xl p-5 bg-gradient-to-b " + c.color + " text-center transition-all duration-300 " + (c.action ? 'cursor-pointer hover:scale-105 hover:border-gold/40' : 'opacity-50 cursor-not-allowed')}
+                style={{ transitionDelay: i * 0.1 + 0.15 + 's' }}
+                onClick={() => {
+                  if (c.action === 'modal') setShowIos(true);
+                  else if (c.action) window.open(c.action, '_blank');
+                }}>
+                <div className="text-3xl mb-3">{c.icon}</div>
+                <h3 className="text-sm font-semibold text-white mb-1">{c.platform}</h3>
+                <p className="text-xs text-gray-500">{c.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {showIos && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+              onClick={() => setShowIos(false)}>
+              <div className="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-sm mx-4 text-center"
+                onClick={e => e.stopPropagation()}>
+                <div className="text-4xl mb-4">📱</div>
+                <h3 className="text-lg font-semibold text-white mb-4">iOS {t(lang, 'dl_ios_desc')}</h3>
+                <div className="text-left space-y-3 text-sm text-gray-300">
+                  <p><span className="text-gold font-bold">1.</span> {t(lang, 'dl_ios_step1')}</p>
+                  <p><span className="text-gold font-bold">2.</span> {t(lang, 'dl_ios_step2')}</p>
+                  <p><span className="text-gold font-bold">3.</span> {t(lang, 'dl_ios_step3')}</p>
+                </div>
+                <a href="https://app.cocobnb.meme" target="_blank" rel="noopener"
+                  className="btn-gold text-black text-sm font-semibold px-6 py-2 rounded-lg mt-6 inline-block">
+                  {lang === 'zh' ? '打开 Coco' : 'Open Coco'}
+                </a>
+                <button onClick={() => setShowIos(false)}
+                  className="block mx-auto mt-3 text-xs text-gray-500 hover:text-gray-300">
+                  {lang === 'zh' ? '关闭' : 'Close'}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </Section>
+  );
+}
+
 // ─── Community ───
 function Community() {
   const { lang } = useLang();
@@ -372,6 +451,7 @@ export default function App() {
       <Plugins />
       <WalletSection />
       <Contract />
+      <Download />
       <Community />
       <Footer />
     </LangContext.Provider>
