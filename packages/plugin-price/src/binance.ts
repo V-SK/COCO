@@ -57,7 +57,7 @@ export class BinancePriceService {
     }
 
     const response = await this.#fetch(
-      `https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`,
+      `https://api.binance.us/api/v3/ticker/24hr?symbol=${pair}`,
     );
     if (!response.ok) {
       throw new CocoError(

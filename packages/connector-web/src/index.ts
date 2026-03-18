@@ -1,6 +1,5 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import { type Server as HttpServer, createServer } from 'node:http';
-import { twitterConnectorPlugin } from '@coco/connector-twitter';
 import {
   type ChatEvent,
   type CocoContext,
@@ -13,9 +12,8 @@ import {
 } from '@coco/core';
 import { alertsPlugin } from '@coco/plugin-alerts';
 import { autoTradePlugin } from '@coco/plugin-auto-trade';
-import { browserPlugin } from '@coco/plugin-browser';
+import { createBrowserPlugin } from '@coco/plugin-browser';
 import { chainEventsPlugin } from '@coco/plugin-chain-events';
-import { computerUsePlugin } from '@coco/plugin-computeruse';
 import { copyTradePlugin } from '@coco/plugin-copy-trade';
 import { cronPlugin } from '@coco/plugin-cron';
 import { dexAggPlugin } from '@coco/plugin-dex-agg';
@@ -31,7 +29,6 @@ import { pricePlugin } from '@coco/plugin-price';
 import { quantSignalPlugin } from '@coco/plugin-quant-signal';
 import { reportPlugin } from '@coco/plugin-report';
 import { scanPlugin } from '@coco/plugin-scan';
-import { shellPlugin } from '@coco/plugin-shell';
 import { sqlPlugin } from '@coco/plugin-sql';
 import { swapPlugin } from '@coco/plugin-swap';
 import { trustScorePlugin } from '@coco/plugin-trust-score';
@@ -42,6 +39,16 @@ import { webhookPlugin } from '@coco/plugin-webhook';
 import { whaleAlertPlugin } from '@coco/plugin-whale-alert';
 import express, { type Request, type Response } from 'express';
 import { WebSocketServer } from 'ws';
+import { ChatStore } from './chat-store.js';
+import { createCustodyTools } from './custody-tools.js';
+
+// ── Security: removed dangerous plugins from web connector ──
+// shellPlugin       — arbitrary command execution on host
+// computerUsePlugin — desktop mouse/keyboard control
+// twitterConnectorPlugin — should not be user-accessible
+//
+// Browser plugin is kept but sandboxed to safe domains only.
+// These plugins remain available in CLI 'chat' mode for admin use.
 
 export interface WebConnectorConfig extends CocoRuntimeConfig {
   host?: string;
@@ -62,7 +69,26 @@ export interface WebConnector {
   ) => Promise<void>;
 }
 
+// ── Sandboxed browser: only crypto-related sites ──────────────
+const safeBrowserPlugin = createBrowserPlugin({
+  headless: true,
+  allowedHosts: [
+    'www.coingecko.com',
+    'coinmarketcap.com',
+    'bscscan.com',
+    'etherscan.io',
+    'dexscreener.com',
+    'pancakeswap.finance',
+    'app.uniswap.org',
+    'debank.com',
+    'defillama.com',
+    'tradingview.com',
+  ],
+  timeout: 15_000,
+});
+
 async function registerDefaultPlugins(runtime: CocoRuntime) {
+  // ── Safe plugins for public users ──
   await runtime.registerPlugin(nfaPlugin);
   await runtime.registerPlugin(pricePlugin);
   await runtime.registerPlugin(scanPlugin);
@@ -79,20 +105,22 @@ async function registerDefaultPlugins(runtime: CocoRuntime) {
   await runtime.registerPlugin(alertsPlugin);
   await runtime.registerPlugin(reportPlugin);
   await runtime.registerPlugin(polymarketPlugin);
-  await runtime.registerPlugin(browserPlugin);
-  await runtime.registerPlugin(shellPlugin);
+  await runtime.registerPlugin(safeBrowserPlugin);
   await runtime.registerPlugin(cronPlugin);
   await runtime.registerPlugin(memoryPlugin);
-  await runtime.registerPlugin(computerUsePlugin);
   await runtime.registerPlugin(visionPlugin);
   await runtime.registerPlugin(knowledgePlugin);
   await runtime.registerPlugin(ttsPlugin);
   await runtime.registerPlugin(sqlPlugin);
   await runtime.registerPlugin(orchestratorPlugin);
-  await runtime.registerPlugin(twitterConnectorPlugin);
   await runtime.registerPlugin(webhookPlugin);
   await runtime.registerPlugin(historyPlugin);
   await runtime.registerPlugin(nftPlugin);
+
+  // ── REMOVED from web connector (security) ──
+  // shellPlugin       — users must NOT execute host commands
+  // computerUsePlugin — users must NOT control the desktop
+  // twitterConnectorPlugin — not user-facing
 }
 
 function buildContext(
@@ -124,8 +152,41 @@ export async function createWebConnector(
     await registerDefaultPlugins(runtime);
   }
 
+  // ── Chat persistence store ──────────────────────────────────
+  const chatDbPath = process.env['COCO_CHAT_DB_PATH'] ?? './data/coco-chat.sqlite';
+  let custodySecret = process.env['COCO_CUSTODY_SECRET'] ?? '';
+  if (!custodySecret || custodySecret.length < 64) {
+    custodySecret = randomBytes(32).toString('hex');
+    runtime.logger.warn('COCO_CUSTODY_SECRET not set or too short — generated ephemeral key (wallets will be unrecoverable after restart!)');
+  }
+  const chatStore = new ChatStore(chatDbPath, custodySecret);
+  runtime.logger.info({ chatDbPath }, 'Chat store initialized');
+
+  // ── Register custody tools ──────────────────────────────────
+  const custodyTools = createCustodyTools(chatStore);
+  for (const tool of custodyTools) {
+    runtime.tools.set(tool.id, tool);
+  }
+  runtime.logger.info('Custody wallet tools registered');
+
+  // ── Security: remove browser.execute-js even from sandboxed browser ──
+  runtime.tools.delete('browser.execute-js');
+  runtime.logger.info('Removed browser.execute-js from public tools');
+
   const app = express();
   app.use(express.json());
+
+  // CORS – allow web frontends
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (_req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({
@@ -151,6 +212,20 @@ export async function createWebConnector(
     res.json({ sessionId });
   });
 
+  // ── Chat history endpoint ──────────────────────────────────
+  app.get('/sessions/:id/messages', (req: Request, res: Response) => {
+    const sessionId = req.params['id'] as string;
+    if (!sessionId) {
+      res.status(400).json({ error: 'Missing session id' });
+      return;
+    }
+    const limit = Math.min(Number(req.query['limit']) || 50, 200);
+    const before = req.query['before'] ? Number(req.query['before']) : undefined;
+    const rows = chatStore.getMessages(sessionId, limit, before);
+    // Return in chronological order (DB returns DESC)
+    res.json({ messages: rows.reverse() });
+  });
+
   const server = createServer(app);
   const wsServer = new WebSocketServer({
     server,
@@ -165,6 +240,7 @@ export async function createWebConnector(
           sessionId?: string;
           walletAddress?: string;
           message?: string;
+          msgId?: string;
         };
 
         if (payload.type !== 'chat' || !payload.sessionId || !payload.message) {
@@ -178,6 +254,18 @@ export async function createWebConnector(
           return;
         }
 
+        const userMsgId = payload.msgId ?? randomUUID();
+        const now = Date.now();
+
+        // Persist user message
+        chatStore.saveMessage({
+          id: userMsgId,
+          sessionId: payload.sessionId,
+          role: 'user',
+          content: payload.message,
+          createdAt: now,
+        });
+
         const ctx = buildContext(
           runtime,
           payload.sessionId,
@@ -185,8 +273,23 @@ export async function createWebConnector(
           payload.walletAddress,
         );
 
+        let assistantText = '';
         for await (const event of runtime.chat(ctx, payload.message)) {
           socket.send(safeJsonStringify(event));
+          if (event.type === 'text') {
+            assistantText += event.content;
+          }
+        }
+
+        // Persist assistant reply
+        if (assistantText) {
+          chatStore.saveMessage({
+            id: randomUUID(),
+            sessionId: payload.sessionId,
+            role: 'assistant',
+            content: assistantText,
+            createdAt: Date.now(),
+          });
         }
       } catch (error) {
         socket.send(
@@ -219,6 +322,7 @@ export async function createWebConnector(
     },
     async stop() {
       wsServer.close();
+      chatStore.close();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {
           if (error) {

@@ -6,7 +6,10 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -21,11 +24,18 @@
   "publishConfig": {
     "access": "public"
   },
-  "keywords": ["coco", "connector", "websocket", "express", "web3"],
+  "keywords": [
+    "coco",
+    "connector",
+    "websocket",
+    "express",
+    "web3"
+  ],
   "dependencies": {
     "@coco/connector-twitter": "workspace:*",
     "@coco/core": "workspace:*",
     "@coco/plugin-alerts": "workspace:*",
+    "@coco/plugin-auto-trade": "workspace:*",
     "@coco/plugin-browser": "workspace:*",
     "@coco/plugin-chain-events": "workspace:*",
     "@coco/plugin-computeruse": "workspace:*",
@@ -51,10 +61,15 @@
     "@coco/plugin-tts": "workspace:*",
     "@coco/plugin-vision": "workspace:*",
     "@coco/plugin-wallet": "workspace:*",
-    "@coco/plugin-auto-trade": "workspace:*",
-    "@coco/plugin-whale-alert": "workspace:*",
     "@coco/plugin-webhook": "workspace:*",
+    "@coco/plugin-whale-alert": "workspace:*",
+    "better-sqlite3": "^11.8.1",
+    "ethers": "^6.13.5",
     "express": "^5.1.0",
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12"
   }
 }

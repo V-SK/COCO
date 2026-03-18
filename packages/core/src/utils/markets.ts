@@ -33,7 +33,7 @@ export async function estimateUsdValue(
   }
 
   const response = await fetchImpl(
-    `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`,
+    `https://api.binance.us/api/v3/ticker/price?symbol=${pair}`,
   );
   if (!response.ok) {
     throw new CocoError(

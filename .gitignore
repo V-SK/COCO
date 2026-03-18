@@ -14,3 +14,12 @@ apps/desktop/release/
 apps/desktop/web-dist/
 apps/landing/dist/
 apps/landing/.vercel/
+
+# Security — never commit
+*.pem
+*.p12
+*secret*
+*credential*
+data/
+reports/
+packages/core/src/memory/sqlite.ts

@@ -96,7 +96,7 @@ class ChainEventsService {
           const pair = watch.target;
           const [symbol] = pair.split('/');
           const response = await fetch(
-            `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`,
+            `https://api.binance.us/api/v3/ticker/price?symbol=${symbol}USDT`,
           );
           if (!response.ok) {
             return;

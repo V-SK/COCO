@@ -518,7 +518,7 @@ class QuantSignalService {
         : [];
     }
     const response = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=1h&limit=${points}`,
+      `https://api.binance.us/api/v3/klines?symbol=${symbol}USDT&interval=1h&limit=${points}`,
     );
     if (!response.ok) {
       return [];

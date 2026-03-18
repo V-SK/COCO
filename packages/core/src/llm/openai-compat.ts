@@ -125,6 +125,7 @@ async function* parseOpenAIStream(
           choices?: Array<{
             delta?: {
               content?: string;
+              reasoning_content?: string;
               tool_calls?: OpenAIToolCallDelta[];
             };
           }>;
@@ -135,8 +136,9 @@ async function* parseOpenAIStream(
           continue;
         }
 
-        if (delta.content) {
-          yield delta.content;
+        const text = delta.content || delta.reasoning_content;
+        if (text) {
+          yield text;
         }
 
         for (const toolCallDelta of delta.tool_calls ?? []) {
@@ -161,6 +163,31 @@ async function* parseOpenAIStream(
   }
 }
 
+
+const IMAGE_URL_RE = /https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp|svg)(\?\S*)?/i;
+
+function hasImageUrl(messages: LLMMessage[]): boolean {
+  return messages.some(
+    (m) => m.role === 'user' && IMAGE_URL_RE.test(m.content),
+  );
+}
+
+function toVisionMessage(message: LLMMessage): Record<string, unknown> {
+  if (message.role !== 'user' || !IMAGE_URL_RE.test(message.content)) {
+    return toOpenAIMessage(message);
+  }
+  const parts: Array<Record<string, unknown>> = [];
+  const urls = message.content.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp|svg)(\?\S*)?/gi) || [];
+  const textOnly = message.content.replace(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp|svg)(\?\S*)?/gi, '').trim();
+  if (textOnly) {
+    parts.push({ type: 'text', text: textOnly });
+  }
+  for (const url of urls) {
+    parts.push({ type: 'image_url', image_url: { url } });
+  }
+  return { role: 'user', content: parts };
+}
+
 export class OpenAICompatibleProvider implements LLMProvider {
   readonly model: string;
   readonly #config: ProviderConfig;
@@ -176,16 +203,19 @@ export class OpenAICompatibleProvider implements LLMProvider {
     messages: LLMMessage[],
     tools?: LLMToolDefinition[],
   ): Promise<LLMMessage> {
+    const isVision = hasImageUrl(messages);
+    const model = isVision
+      ? this.#config.model.replace(/Qwen2\.5-\d+B-Instruct/, 'Qwen2.5-VL-72B-Instruct')
+      : this.#config.model;
     const response = await this.#fetch(
       `${this.#config.baseUrl}/chat/completions`,
       {
         method: 'POST',
         headers: buildHeaders(this.#config),
         body: JSON.stringify({
-          model: this.#config.model,
-          messages: messages.map(toOpenAIMessage),
-          tools,
-          tool_choice: tools?.length ? 'auto' : undefined,
+          model,
+          messages: isVision ? messages.map(toVisionMessage) : messages.map(toOpenAIMessage),
+          ...(isVision ? {} : { tools, tool_choice: tools?.length ? "auto" : undefined }),
           temperature: this.#config.temperature,
           max_tokens: this.#config.maxTokens,
         }),
@@ -221,16 +251,21 @@ export class OpenAICompatibleProvider implements LLMProvider {
     messages: LLMMessage[],
     tools?: LLMToolDefinition[],
   ): AsyncGenerator<string | LLMToolCall> {
+    const isVision = hasImageUrl(messages);
+    const model = isVision
+      ? this.#config.model.replace(/Qwen2\.5-\d+B-Instruct/, 'Qwen2.5-VL-72B-Instruct')
+      : this.#config.model;
     const response = await this.#fetch(
       `${this.#config.baseUrl}/chat/completions`,
       {
         method: 'POST',
         headers: buildHeaders(this.#config),
         body: JSON.stringify({
-          model: this.#config.model,
-          messages: messages.map(toOpenAIMessage),
-          tools,
-          tool_choice: tools?.length ? 'auto' : undefined,
+          model,
+          messages: isVision
+            ? messages.map(toVisionMessage)
+            : messages.map(toOpenAIMessage),
+          ...(isVision ? {} : { tools, tool_choice: tools?.length ? 'auto' : undefined }),
           temperature: this.#config.temperature,
           max_tokens: this.#config.maxTokens,
           stream: true,
