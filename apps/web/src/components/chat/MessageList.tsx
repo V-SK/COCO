@@ -83,15 +83,29 @@ export function MessageList({
     if (atBottom) setHasNewMessages(false);
   }, []);
 
-  // Auto-scroll only when user is at bottom
+  // Auto-scroll only when a NEW user message is added (user just sent)
   useEffect(() => {
-    if (isAtBottom) {
+    const newCount = messages.length;
+    const added = newCount > prevMessageCount.current;
+    const lastMsg = messages[newCount - 1];
+    const userJustSent = added && lastMsg?.role === 'user';
+
+    if (userJustSent) {
+      // Always scroll to bottom when user sends a message
       endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    } else if (messages.length > prevMessageCount.current) {
+      setIsAtBottom(true);
+    } else if (added && !isAtBottom) {
       setHasNewMessages(true);
     }
-    prevMessageCount.current = messages.length;
-  }, [messages, streamingContent, isAtBottom]);
+    prevMessageCount.current = newCount;
+  }, [messages.length]);
+
+  // During streaming: only follow if user is already at bottom
+  useEffect(() => {
+    if (isAtBottom && streamingContent) {
+      endRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+    }
+  }, [streamingContent, isAtBottom]);
 
   function scrollToBottom() {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
