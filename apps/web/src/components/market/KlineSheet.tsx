@@ -243,14 +243,14 @@ export function KlineSheet({
       {/* Backdrop */}
       <div
         ref={backdropRef}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm kline-backdrop-in"
         onClick={onClose}
       />
 
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="relative z-10 flex flex-col rounded-t-2xl border-t border-border/50 bg-background transition-transform duration-200"
+        className="relative z-10 flex flex-col rounded-t-2xl border-t border-border/50 bg-background kline-slide-up transition-transform"
         style={{ maxHeight: '75dvh' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
