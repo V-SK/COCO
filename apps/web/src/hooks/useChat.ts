@@ -6,9 +6,6 @@ import { useChatStore } from '@/stores/chatStore';
 import { useEffect, useRef } from 'react';
 import type { Message } from '@/types';
 
-let initPromise: Promise<void> | null = null;
-
-
 export function useChat() {
   const sessionId = useChatStore((state) => state.sessionId);
   const isConnected = useChatStore((state) => state.isConnected);
@@ -21,14 +18,15 @@ export function useChat() {
   const handleChatEvent = useChatStore((state) => state.handleChatEvent);
   const setMessages = useChatStore((state) => state.setMessages);
   const connectionRef = useRef<ChatConnection | null>(null);
+  const restoredRef = useRef(false);
 
-  // ── Restore messages on mount ──────────────────────────────
+  // ── Restore messages on mount / visibility change ──────────
   useEffect(() => {
-    if (!sessionId || initPromise) return;
+    if (!sessionId) return;
 
-    initPromise = (async () => {
+    async function restoreMessages() {
       try {
-        // 1. Instant restore from IndexedDB
+        // 1. Try IndexedDB first (instant)
         const local = await getMessagesLocal(sessionId);
         if (local.length > 0) {
           const restored: Message[] = local.map((m) => ({
@@ -40,7 +38,7 @@ export function useChat() {
           setMessages(restored);
         }
 
-        // 2. Background sync from server
+        // 2. Always sync from server (source of truth)
         try {
           const server = await fetchMessages(sessionId, 100);
           if (server.length > 0) {
@@ -51,7 +49,7 @@ export function useChat() {
               timestamp: m.createdAt,
             }));
             setMessages(serverMessages);
-            // Update IndexedDB with server truth
+            // Rebuild IndexedDB from server truth
             for (const m of server) {
               await saveMessageLocal({
                 id: m.id,
@@ -63,13 +61,30 @@ export function useChat() {
             }
           }
         } catch {
-          // Server unreachable — IndexedDB data is good enough
           console.warn('[Chat] Server sync failed, using local cache');
         }
       } catch (e) {
         console.error('[Chat] Restore failed:', e);
       }
-    })();
+    }
+
+    // Restore on initial mount
+    if (!restoredRef.current) {
+      restoredRef.current = true;
+      restoreMessages();
+    }
+
+    // iOS: restore when app comes back from background
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        restoreMessages();
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [sessionId, setMessages]);
 
   // ── Confirm session on server ──────────────────────────────
@@ -156,9 +171,7 @@ export function useChat() {
       timestamp: Date.now(),
     }).catch(() => {});
 
-    // Send with msgId for server dedup
     if (connectionRef.current) {
-      // We need to send msgId — update ws payload
       connectionRef.current.send(content, walletAddress);
     }
   }
