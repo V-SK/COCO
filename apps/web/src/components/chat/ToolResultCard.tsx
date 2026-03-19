@@ -1,6 +1,11 @@
 import { PriceCard } from '@/components/tools/PriceCard';
 import { ScanCard } from '@/components/tools/ScanCard';
 import { SwapQuoteCard } from '@/components/tools/SwapQuoteCard';
+import {
+  TokenTradeCard,
+  isTokenTradeData,
+} from '@/components/tools/TokenTradeCard';
+import { useChat } from '@/hooks/useChat';
 import type { ToolResult } from '@/types';
 import {
   isPriceResultLike,
@@ -21,6 +26,8 @@ export function ToolResultCard({
   result,
   content,
 }: ToolResultCardProps) {
+  const { sendMessage } = useChat();
+
   if (!result) {
     return <p className="whitespace-pre-wrap break-words">{content}</p>;
   }
@@ -39,6 +46,23 @@ export function ToolResultCard({
     return <PriceCard result={result.data} summary={result.text ?? content} />;
   }
 
+  // scan.contract → show TokenTradeCard (with buy/sell buttons) instead of plain ScanCard
+  if (toolId === 'scan.contract' && isTokenTradeData(result.data)) {
+    return (
+      <TokenTradeCard
+        result={result.data}
+        summary={result.text ?? content}
+        onBuy={(address, amountBnb) => {
+          sendMessage(`买入 ${amountBnb} BNB 的 ${address}`);
+        }}
+        onSell={(address, percent) => {
+          sendMessage(`卖出 ${percent}% 的 ${address}`);
+        }}
+      />
+    );
+  }
+
+  // Fallback plain scan card (if data doesn't have trade fields)
   if (toolId === 'scan.contract' && isScanResultLike(result.data)) {
     return <ScanCard result={result.data} summary={result.text ?? content} />;
   }

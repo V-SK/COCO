@@ -183,6 +183,7 @@ export const scanContractTool: CocoTool<ScanContractParams> = {
     return {
       success: true,
       data: {
+        address,
         trustScore: scan.trustScore,
         risks: scan.risks,
         tokenName,
@@ -190,7 +191,14 @@ export const scanContractTool: CocoTool<ScanContractParams> = {
         price: dex ? Number(dex.priceUsd) : null,
         liquidity: dex?.liquidity?.usd ?? null,
         volume24h: dex?.volume?.h24 ?? null,
+        marketCap: dex?.marketCap ?? dex?.fdv ?? null,
+        priceChange24h: dex?.priceChange?.h24 ?? null,
         holderCount: holderCount ?? null,
+        buyTax: buyTax,
+        sellTax: sellTax,
+        isOpenSource: raw['is_open_source'] === '1',
+        isRenounced: raw['owner_address'] === '0x0000000000000000000000000000000000000000',
+        isHoneypot: raw['is_honeypot'] === '1',
         recommendation,
       },
       text: report,
