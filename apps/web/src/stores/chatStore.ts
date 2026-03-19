@@ -187,22 +187,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } = get();
 
     switch (event.type) {
-      case 'text':
+      case 'text': {
+        // If we just rendered a rich tool card, suppress AI's follow-up text
+        // (it repeats the same scan report in plain text — redundant)
+        const { messages: allMsgs, streamingContent: sc } = get();
+        const prev = allMsgs[allMsgs.length - 1];
+        const SUPPRESS_AFTER = new Set(['scan.contract']);
+        if (
+          prev?.role === 'tool' &&
+          prev.toolId &&
+          SUPPRESS_AFTER.has(prev.toolId) &&
+          sc.length === 0
+        ) {
+          // Skip — don't append this text chunk
+          break;
+        }
         appendToStreaming(event.content);
         break;
-      case 'tool_call':
-        finalizeStreaming();
+      }
+      case 'tool_call': {
+        // For scan.contract, drop the "让我分析一下..." filler text before tool call
+        const RICH_CALL_TOOLS = new Set(['scan.contract']);
+        if (RICH_CALL_TOOLS.has(event.toolId)) {
+          set({ streamingContent: '' });
+        } else {
+          finalizeStreaming();
+        }
         setPendingToolCall({
           toolId: event.toolId,
           params: event.params,
         });
         console.log('[Chat] Tool call:', event.toolId, event.params);
         break;
+      }
       case 'tool_result': {
-        finalizeStreaming();
-        setPendingToolCall(null);
-        // Only show rich tool results (price, scan, swap) — others wait for LLM summary
+        // For rich tool cards, discard any streaming text that came before the tool call
+        // (e.g. "让我帮你分析一下这个合约..." — redundant filler)
         const RICH_TOOLS = new Set(['price.get', 'scan.contract', 'swap.execute']);
+        if (RICH_TOOLS.has(event.toolId)) {
+          // Drop partial streaming text instead of finalizing it
+          set({ streamingContent: '' });
+        } else {
+          finalizeStreaming();
+        }
+        setPendingToolCall(null);
         if (RICH_TOOLS.has(event.toolId)) {
           addMessage({
             id: crypto.randomUUID(),
