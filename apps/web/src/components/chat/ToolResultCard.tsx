@@ -51,7 +51,6 @@ export function ToolResultCard({
     return (
       <TokenTradeCard
         result={result.data}
-        summary={result.text ?? content}
         onBuy={(address, amountBnb) => {
           sendMessage(`买入 ${amountBnb} BNB 的 ${address}`);
         }}

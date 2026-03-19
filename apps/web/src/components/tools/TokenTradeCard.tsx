@@ -1,5 +1,4 @@
 import { Badge } from '@/components/common/Badge';
-import { useSwapStore } from '@/stores/swapStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { ScanResultLike } from '@/types/toolResults';
 import { useState } from 'react';
@@ -27,7 +26,6 @@ interface TokenTradeData extends ScanResultLike {
 
 interface TokenTradeCardProps {
   result: TokenTradeData;
-  summary?: string | undefined;
   onBuy?: (address: string, amountBnb: string) => void;
   onSell?: (address: string, percent: number) => void;
 }
@@ -59,7 +57,7 @@ function formatAddress(address: string) {
 
 /* ── Component ── */
 
-export function TokenTradeCard({ result, summary, onBuy, onSell }: TokenTradeCardProps) {
+export function TokenTradeCard({ result, onBuy, onSell }: TokenTradeCardProps) {
   const { address: walletAddress, isConnected } = useAccount();
   const { data: bnbBalance } = useBalance({ address: walletAddress });
   const showToast = useUiStore((state) => state.showToast);
@@ -83,7 +81,7 @@ export function TokenTradeCard({ result, summary, onBuy, onSell }: TokenTradeCar
         : 'bg-error';
 
   const balanceStr = bnbBalance
-    ? `${Number(bnbBalance.formatted).toFixed(4)} BNB`
+    ? `${(Number(bnbBalance.value) / 10 ** bnbBalance.decimals).toFixed(4)} BNB`
     : '-- BNB';
 
   function handleBuy(amount: string) {
