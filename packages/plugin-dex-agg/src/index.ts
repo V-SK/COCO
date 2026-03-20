@@ -25,6 +25,24 @@ export interface Quote {
   tx?: Record<string, unknown> | undefined;
 }
 
+/**
+ * Convert a human-readable amount to wei (raw units).
+ * Assumes 18 decimals for ERC-20 tokens on BSC.
+ */
+function toWei(amount: string, decimals = 18): string {
+  const parts = amount.split('.');
+  const whole = parts[0] ?? '0';
+  let frac = (parts[1] ?? '').slice(0, decimals).padEnd(decimals, '0');
+  return BigInt(whole + frac).toString();
+}
+
+/**
+ * Check if amount looks like it's already in wei (very large number).
+ */
+function isWei(amount: string): boolean {
+  return amount.length > 10 && /^\d+$/.test(amount);
+}
+
 async function fetchQuote(
   provider: 'paraswap' | 'openocean',
   chainId: number,
@@ -32,9 +50,12 @@ async function fetchQuote(
   toToken: string,
   amount: string,
 ): Promise<Quote> {
+  // API expects wei — convert if amount looks human-readable
+  const amountWei = isWei(amount) ? amount : toWei(amount);
+
   if (provider === 'paraswap') {
     const response = await fetch(
-      `https://apiv5.paraswap.io/prices/?srcToken=${fromToken}&destToken=${toToken}&amount=${amount}&network=${chainId}&side=SELL`,
+      `https://apiv5.paraswap.io/prices/?srcToken=${fromToken}&destToken=${toToken}&amount=${amountWei}&network=${chainId}&side=SELL`,
     );
     if (response.ok) {
       const payload = (await response.json()) as {
@@ -69,7 +90,7 @@ async function fetchQuote(
   }
 
   const response = await fetch(
-    `https://open-api.openocean.finance/v3/${chainId}/quote?inTokenAddress=${fromToken}&outTokenAddress=${toToken}&amount=${amount}`,
+    `https://open-api.openocean.finance/v3/${chainId}/quote?inTokenAddress=${fromToken}&outTokenAddress=${toToken}&amount=${amountWei}`,
   );
   if (!response.ok) {
     return {
