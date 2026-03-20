@@ -85,13 +85,105 @@ function toOpenAIMessage(message: LLMMessage): Record<string, unknown> {
   };
 }
 
+/**
+ * Regex to match Hermes-style `<tool_call>...</tool_call>` blocks emitted by
+ * some models (e.g. Qwen 2.5) that bypass the standard OpenAI function-calling
+ * wire format and instead output tool invocations as plain text.
+ */
+const HERMES_TOOL_CALL_RE = /<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/g;
+
+/**
+ * Try to parse Hermes-style tool calls out of accumulated text.
+ * Returns parsed `LLMToolCall[]` (may be empty) and the remaining text with
+ * all `<tool_call>` blocks stripped.
+ */
+function parseHermesToolCalls(text: string): {
+  parsedCalls: LLMToolCall[];
+  remainingText: string;
+} {
+  const parsedCalls: LLMToolCall[] = [];
+  let idx = 0;
+
+  for (const match of text.matchAll(HERMES_TOOL_CALL_RE)) {
+    try {
+      const raw = JSON.parse(match[1]) as Record<string, unknown>;
+
+      // Support both flat `{ name, arguments }` and OpenAI-style
+      // `{ function: { name, arguments } }` wrappers.
+      let name: string;
+      let args: string;
+
+      if (raw.function && typeof raw.function === 'object') {
+        const fn = raw.function as { name?: string; arguments?: unknown };
+        name = String(fn.name ?? '');
+        args =
+          typeof fn.arguments === 'string'
+            ? fn.arguments
+            : JSON.stringify(fn.arguments ?? {});
+      } else {
+        name = String(raw.name ?? '');
+        args =
+          typeof raw.arguments === 'string'
+            ? raw.arguments
+            : JSON.stringify(raw.arguments ?? {});
+      }
+
+      if (name) {
+        parsedCalls.push({
+          id: String(raw.id ?? `hermes_tool_${idx}`),
+          name,
+          arguments: args,
+        });
+        idx++;
+      }
+    } catch {
+      // Malformed JSON inside <tool_call> — skip this block.
+    }
+  }
+
+  const remainingText = text.replace(HERMES_TOOL_CALL_RE, '').trim();
+  return { parsedCalls, remainingText };
+}
+
 async function* parseOpenAIStream(
   body: ReadableStream<Uint8Array>,
 ): AsyncGenerator<string | LLMToolCall> {
   const decoder = new TextDecoder();
   const reader = body.getReader();
   const toolCalls = new Map<number, LLMToolCall>();
-  let buffer = '';
+
+  // SSE frame buffer
+  let sseBuffer = '';
+  // Accumulate all text chunks so we can detect Hermes-style tool calls at the
+  // end of the stream.  Text is NOT yielded immediately — it is buffered and
+  // emitted after the stream completes so that raw `<tool_call>` tags are never
+  // sent to the frontend.
+  let textBuffer = '';
+
+  const flushAndReturn = async function* (): AsyncGenerator<
+    string | LLMToolCall
+  > {
+    const hasStandardToolCalls = toolCalls.size > 0;
+
+    if (!hasStandardToolCalls && textBuffer.includes('<tool_call>')) {
+      // ---------- Hermes-style fallback ----------
+      const { parsedCalls, remainingText } = parseHermesToolCalls(textBuffer);
+      if (remainingText) {
+        yield remainingText;
+      }
+      for (const call of parsedCalls) {
+        yield call;
+      }
+    } else {
+      // ---------- Standard path ----------
+      if (textBuffer) {
+        yield textBuffer;
+      }
+      for (const toolCall of toolCalls.values()) {
+        yield toolCall;
+      }
+    }
+  };
 
   while (true) {
     const { done, value } = await reader.read();
@@ -99,9 +191,9 @@ async function* parseOpenAIStream(
       break;
     }
 
-    buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split('\n\n');
-    buffer = parts.pop() ?? '';
+    sseBuffer += decoder.decode(value, { stream: true });
+    const parts = sseBuffer.split('\n\n');
+    sseBuffer = parts.pop() ?? '';
 
     for (const part of parts) {
       const lines = part
@@ -115,9 +207,7 @@ async function* parseOpenAIStream(
         }
         const payload = line.slice(5).trim();
         if (payload === '[DONE]') {
-          for (const toolCall of toolCalls.values()) {
-            yield toolCall;
-          }
+          yield* flushAndReturn();
           return;
         }
 
@@ -138,7 +228,7 @@ async function* parseOpenAIStream(
 
         const text = delta.content || delta.reasoning_content;
         if (text) {
-          yield text;
+          textBuffer += text;
         }
 
         for (const toolCallDelta of delta.tool_calls ?? []) {
@@ -158,9 +248,8 @@ async function* parseOpenAIStream(
     }
   }
 
-  for (const toolCall of toolCalls.values()) {
-    yield toolCall;
-  }
+  // Stream ended without an explicit `[DONE]` signal — flush everything.
+  yield* flushAndReturn();
 }
 
 
@@ -240,10 +329,28 @@ export class OpenAICompatibleProvider implements LLMProvider {
     };
 
     const message = json.choices?.[0]?.message;
+    const content = message?.content ?? '';
+    const standardToolCalls = normalizeToolCalls(message?.tool_calls);
+
+    // Hermes-style fallback for non-streaming responses
+    if (
+      (!standardToolCalls || standardToolCalls.length === 0) &&
+      content.includes('<tool_call>')
+    ) {
+      const { parsedCalls, remainingText } = parseHermesToolCalls(content);
+      if (parsedCalls.length > 0) {
+        return {
+          role: 'assistant',
+          content: remainingText,
+          toolCalls: parsedCalls,
+        };
+      }
+    }
+
     return {
       role: 'assistant',
-      content: message?.content ?? '',
-      toolCalls: normalizeToolCalls(message?.tool_calls),
+      content,
+      toolCalls: standardToolCalls,
     };
   }
 
