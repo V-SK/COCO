@@ -114,20 +114,19 @@ function SearchBar({
         return;
       }
 
-      // Contract address: wait until complete (42 chars) or debounce longer
+      // Contract address: wait until ≥ 40 chars (full = 42)
       const isAddress = /^0x[a-fA-F0-9]/i.test(trimmed);
       if (isAddress) {
-        // Full address (42 chars) → search immediately
-        if (trimmed.length === 42) {
-          timerRef.current = setTimeout(() => onSearch(trimmed), 100);
+        if (trimmed.length >= 40) {
+          timerRef.current = setTimeout(() => onSearch(trimmed), 150);
         }
-        // Partial address → don't search yet, wait for paste/complete
+        // Partial → wait for paste to complete
         return;
       }
 
-      // Text search: debounce 600ms, min 2 chars
+      // Text search: debounce 500ms, min 2 chars
       if (trimmed.length >= 2) {
-        timerRef.current = setTimeout(() => onSearch(trimmed), 600);
+        timerRef.current = setTimeout(() => onSearch(trimmed), 500);
       }
     },
     [onSearch],

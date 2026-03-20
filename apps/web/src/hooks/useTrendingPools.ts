@@ -145,42 +145,96 @@ async function enrichImages(pools: PoolToken[], chain: ChainId) {
   await Promise.allSettled(promises);
 }
 
-/* ── Search pools ── */
+/* ── DexScreener chain mapping ── */
+const DEXSCREENER_CHAINS: Record<ChainId, string> = {
+  bsc: 'bsc',
+  eth: 'ethereum',
+  solana: 'solana',
+  base: 'base',
+};
+
+/* ── Parse DexScreener pair into PoolToken ── */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseDexScreenerPair(pair: any, chain: ChainId): PoolToken | null {
+  try {
+    const price = parseFloat(pair.priceUsd || '0');
+    if (price <= 0) return null;
+    return {
+      address: pair.baseToken?.address || '',
+      name: pair.baseToken?.name || '',
+      symbol: pair.baseToken?.symbol || '??',
+      imageUrl: pair.info?.imageUrl || undefined,
+      priceUsd: price,
+      priceChange1h: pair.priceChange?.h1 || 0,
+      priceChange6h: pair.priceChange?.h6 || 0,
+      priceChange24h: pair.priceChange?.h24 || 0,
+      volume24h: pair.volume?.h24 || 0,
+      liquidity: pair.liquidity?.usd || 0,
+      marketCap: pair.marketCap || 0,
+      fdv: pair.fdv || 0,
+      pairCreatedAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt).getTime() : 0,
+      txBuys24h: pair.txns?.h24?.buys || 0,
+      txSells24h: pair.txns?.h24?.sells || 0,
+      chainId: chain,
+      pairAddress: pair.pairAddress || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+/* ── Search pools (GeckoTerminal → DexScreener fallback) ── */
 export async function searchPools(
   query: string,
   chain: ChainId,
 ): Promise<PoolToken[]> {
   const geckoChain = GECKO_CHAINS[chain];
-  const isAddress = /^0x[a-fA-F0-9]{30,}$/i.test(query.trim());
+  const trimmed = query.trim().toLowerCase();
+  const isAddress = /^0x[a-fA-F0-9]{38,42}$/i.test(trimmed);
 
-  let url: string;
+  // Strategy 1: GeckoTerminal
+  try {
+    const url = isAddress
+      ? `https://api.geckoterminal.com/api/v2/networks/${geckoChain}/tokens/${trimmed}/pools?page=1`
+      : `https://api.geckoterminal.com/api/v2/search/pools?query=${encodeURIComponent(query)}&network=${geckoChain}`;
+
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (res.ok) {
+      const json = await res.json();
+      const pools = (json.data || [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((p: any) => parsePool(p, chain))
+        .filter(Boolean) as PoolToken[];
+
+      if (pools.length > 0) {
+        await enrichImages(pools.slice(0, 10), chain);
+        return pools;
+      }
+    }
+  } catch { /* fallback */ }
+
+  // Strategy 2: DexScreener fallback (especially for addresses not on GeckoTerminal)
   if (isAddress) {
-    // Direct token lookup → get pools for this token address
-    url = `https://api.geckoterminal.com/api/v2/networks/${geckoChain}/tokens/${query.trim().toLowerCase()}/pools?page=1`;
-  } else {
-    url = `https://api.geckoterminal.com/api/v2/search/pools?query=${encodeURIComponent(query)}&network=${geckoChain}`;
+    try {
+      const dsChain = DEXSCREENER_CHAINS[chain];
+      const res = await fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${trimmed}`,
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const pairs = (json.pairs || [])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((p: any) => p.chainId === dsChain)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((p: any) => parseDexScreenerPair(p, chain))
+          .filter(Boolean) as PoolToken[];
+
+        if (pairs.length > 0) return pairs;
+      }
+    } catch { /* ignore */ }
   }
 
-  const res = await fetch(url, {
-    headers: { Accept: 'application/json' },
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  const pools = (json.data || [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((p: any) => parsePool(p, chain))
-    .filter(Boolean) as PoolToken[];
-
-  // For address search, deduplicate by token address (multiple pools for same token)
-  if (isAddress && pools.length > 0) {
-    // Set the correct address for all pools (they should all be the same token)
-    pools.forEach((p) => {
-      if (!p.address) p.address = query.trim().toLowerCase();
-    });
-  }
-
-  await enrichImages(pools.slice(0, 10), chain);
-  return pools;
+  return [];
 }
 
 /* ── GoPlus security (lazy) ── */
