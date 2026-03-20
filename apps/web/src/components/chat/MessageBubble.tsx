@@ -171,10 +171,10 @@ export function MessageBubble({
       )}
       <div
         className={cn(
-          'max-w-[calc(85%-42px)] break-words text-[15px] leading-relaxed',
+          'break-words text-[15px] leading-relaxed',
           isTool
-            ? 'whitespace-pre-wrap rounded-2xl bg-surface px-4 py-3 text-neutral-200'
-            : 'whitespace-pre-wrap text-neutral-100',
+            ? 'max-w-[calc(100%-42px)]'
+            : 'max-w-[calc(85%-42px)] whitespace-pre-wrap text-neutral-100',
         )}
       >
         {isTool ? (

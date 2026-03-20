@@ -45,6 +45,7 @@ interface ChatState {
   error: string | null;
   streamingContent: string;
   pendingToolCall: { toolId: string; params: unknown } | null;
+  suppressTextAfterTool: boolean;
   setSessionId: (id: string) => void;
   setConnected: (connected: boolean) => void;
   setLoading: (loading: boolean) => void;
@@ -73,6 +74,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   streamingContent: '',
   pendingToolCall: null,
+  suppressTextAfterTool: false,
   sessions: ensureCurrentSession(getOrCreateSessionId(), loadSessions()),
 
   setSessionId: (id) => {
@@ -149,6 +151,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [],
       streamingContent: '',
       pendingToolCall: null,
+      suppressTextAfterTool: false,
       error: null,
       isLoading: false,
       sessions,
@@ -162,6 +165,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [],
       streamingContent: '',
       pendingToolCall: null,
+      suppressTextAfterTool: false,
       error: null,
       isLoading: false,
     });
@@ -186,20 +190,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       setLoading,
     } = get();
 
+    const RICH_TOOLS = new Set(['price.get', 'scan.contract', 'swap.execute']);
+
     switch (event.type) {
       case 'text': {
-        // If we just rendered a rich tool card, suppress AI's follow-up text
-        // (it repeats the same scan report in plain text — redundant)
-        const { messages: allMsgs, streamingContent: sc } = get();
-        const prev = allMsgs[allMsgs.length - 1];
-        const SUPPRESS_AFTER = new Set(['scan.contract']);
-        if (
-          prev?.role === 'tool' &&
-          prev.toolId &&
-          SUPPRESS_AFTER.has(prev.toolId) &&
-          sc.length === 0
-        ) {
-          // Skip — don't append this text chunk
+        // If a rich tool card was rendered, suppress ALL follow-up text chunks
+        // (the AI repeats the same scan report in plain text — redundant)
+        if (get().suppressTextAfterTool) {
+          // Drop this text chunk entirely
           break;
         }
         appendToStreaming(event.content);
@@ -207,8 +205,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       case 'tool_call': {
         // For scan.contract, drop the "让我分析一下..." filler text before tool call
-        const RICH_CALL_TOOLS = new Set(['scan.contract']);
-        if (RICH_CALL_TOOLS.has(event.toolId)) {
+        if (RICH_TOOLS.has(event.toolId)) {
           set({ streamingContent: '' });
         } else {
           finalizeStreaming();
@@ -223,10 +220,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       case 'tool_result': {
         // For rich tool cards, discard any streaming text that came before the tool call
         // (e.g. "让我帮你分析一下这个合约..." — redundant filler)
-        const RICH_TOOLS = new Set(['price.get', 'scan.contract', 'swap.execute']);
         if (RICH_TOOLS.has(event.toolId)) {
           // Drop partial streaming text instead of finalizing it
-          set({ streamingContent: '' });
+          // and enable suppression for all subsequent text chunks until 'done'
+          set({ streamingContent: '', suppressTextAfterTool: true });
         } else {
           finalizeStreaming();
         }
@@ -249,10 +246,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
         setPendingToolCall(null);
         setError(event.error);
         setLoading(false);
+        set({ suppressTextAfterTool: false });
         break;
       case 'done':
-        finalizeStreaming();
+        // Don't finalize streaming if we were suppressing — nothing to finalize
+        if (!get().suppressTextAfterTool) {
+          finalizeStreaming();
+        } else {
+          // Clear any accidentally accumulated streaming content
+          set({ streamingContent: '' });
+        }
         setLoading(false);
+        set({ suppressTextAfterTool: false });
         break;
       default:
         break;
