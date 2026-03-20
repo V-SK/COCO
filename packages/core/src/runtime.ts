@@ -303,11 +303,14 @@ export function createRuntime(
             const result = await runtime.invokeTool(call.name, ctx, parsedArgs);
             yield { type: 'tool_result', toolId: call.name, result };
 
-            // Truncate tool result to avoid overwhelming the LLM context
-            const MAX_TOOL_RESULT_LEN = 2000;
-            let toolContent = safeJsonStringify(result);
-            if (toolContent.length > MAX_TOOL_RESULT_LEN) {
-              toolContent = toolContent.slice(0, MAX_TOOL_RESULT_LEN) + '...(truncated)';
+            // Use text summary for LLM context (much shorter than full JSON)
+            // The full result is already sent to frontend via tool_result event
+            let toolContent: string;
+            if (result.text) {
+              toolContent = result.text.slice(0, 800);
+            } else {
+              const raw = safeJsonStringify(result);
+              toolContent = raw.length > 800 ? raw.slice(0, 800) + '...' : raw;
             }
             const toolMessage: LLMMessage = {
               role: 'tool',
