@@ -261,9 +261,13 @@ export function createRuntime(
             return;
           }
 
+          // Strip Hermes <tool_call> tags from content before sending back to LLM
+          // Otherwise the model sees its own raw tags in context and degrades
+          const HERMES_TAG_RE = /<tool_call>[\s\S]*?<\/tool_call>/g;
+          const cleanedText = fullText.replace(HERMES_TAG_RE, '').trim();
           const assistantMessage: LLMMessage = {
             role: 'assistant',
-            content: fullText,
+            content: cleanedText || null,
             toolCalls: cloneToolCalls(toolCalls),
           };
           messages.push(assistantMessage);
@@ -299,10 +303,16 @@ export function createRuntime(
             const result = await runtime.invokeTool(call.name, ctx, parsedArgs);
             yield { type: 'tool_result', toolId: call.name, result };
 
+            // Truncate tool result to avoid overwhelming the LLM context
+            const MAX_TOOL_RESULT_LEN = 2000;
+            let toolContent = safeJsonStringify(result);
+            if (toolContent.length > MAX_TOOL_RESULT_LEN) {
+              toolContent = toolContent.slice(0, MAX_TOOL_RESULT_LEN) + '...(truncated)';
+            }
             const toolMessage: LLMMessage = {
               role: 'tool',
               toolCallId: call.id,
-              content: safeJsonStringify(result),
+              content: toolContent,
             };
             messages.push(toolMessage);
             newMessages.push(toolMessage);
