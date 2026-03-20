@@ -151,7 +151,16 @@ export async function searchPools(
   chain: ChainId,
 ): Promise<PoolToken[]> {
   const geckoChain = GECKO_CHAINS[chain];
-  const url = `https://api.geckoterminal.com/api/v2/search/pools?query=${encodeURIComponent(query)}&network=${geckoChain}`;
+  const isAddress = /^0x[a-fA-F0-9]{30,}$/i.test(query.trim());
+
+  let url: string;
+  if (isAddress) {
+    // Direct token lookup → get pools for this token address
+    url = `https://api.geckoterminal.com/api/v2/networks/${geckoChain}/tokens/${query.trim().toLowerCase()}/pools?page=1`;
+  } else {
+    url = `https://api.geckoterminal.com/api/v2/search/pools?query=${encodeURIComponent(query)}&network=${geckoChain}`;
+  }
+
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
   });
@@ -161,7 +170,16 @@ export async function searchPools(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .map((p: any) => parsePool(p, chain))
     .filter(Boolean) as PoolToken[];
-  await enrichImages(pools, chain);
+
+  // For address search, deduplicate by token address (multiple pools for same token)
+  if (isAddress && pools.length > 0) {
+    // Set the correct address for all pools (they should all be the same token)
+    pools.forEach((p) => {
+      if (!p.address) p.address = query.trim().toLowerCase();
+    });
+  }
+
+  await enrichImages(pools.slice(0, 10), chain);
   return pools;
 }
 
