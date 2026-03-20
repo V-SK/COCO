@@ -154,30 +154,38 @@ async function* parseOpenAIStream(
 
   // SSE frame buffer
   let sseBuffer = '';
-  // Accumulate all text chunks so we can detect Hermes-style tool calls at the
-  // end of the stream.  Text is NOT yielded immediately — it is buffered and
-  // emitted after the stream completes so that raw `<tool_call>` tags are never
-  // sent to the frontend.
-  let textBuffer = '';
+  // Track text that has been yielded vs buffered.
+  // We yield text immediately (streaming feel) BUT also accumulate it so we
+  // can detect Hermes `<tool_call>` tags at stream end.
+  let fullText = '';
+  // Once we detect a `<tool_call>` opening tag mid-stream, we stop yielding
+  // text and buffer the rest so raw tags don't leak to the frontend.
+  let hermesDetected = false;
+  // Text buffered after hermesDetected (not yet yielded)
+  let hermesBuffer = '';
 
   const flushAndReturn = async function* (): AsyncGenerator<
     string | LLMToolCall
   > {
     const hasStandardToolCalls = toolCalls.size > 0;
 
-    if (!hasStandardToolCalls && textBuffer.includes('<tool_call>')) {
+    if (!hasStandardToolCalls && fullText.includes('<tool_call>')) {
       // ---------- Hermes-style fallback ----------
-      const { parsedCalls, remainingText } = parseHermesToolCalls(textBuffer);
-      if (remainingText) {
-        yield remainingText;
+      const { parsedCalls, remainingText } = parseHermesToolCalls(fullText);
+      // Don't re-yield text that was already streamed before <tool_call> was detected.
+      // Only yield the hermesBuffer remainder (stripped of tags) if any.
+      const strippedHermes = hermesBuffer.replace(HERMES_TOOL_CALL_RE, '').trim();
+      if (strippedHermes) {
+        yield strippedHermes;
       }
       for (const call of parsedCalls) {
         yield call;
       }
     } else {
       // ---------- Standard path ----------
-      if (textBuffer) {
-        yield textBuffer;
+      // Any remaining hermesBuffer that wasn't yielded yet
+      if (hermesBuffer) {
+        yield hermesBuffer;
       }
       for (const toolCall of toolCalls.values()) {
         yield toolCall;
@@ -228,7 +236,21 @@ async function* parseOpenAIStream(
 
         const text = delta.content || delta.reasoning_content;
         if (text) {
-          textBuffer += text;
+          fullText += text;
+
+          // Check if we just encountered a <tool_call> opening tag
+          if (!hermesDetected && fullText.includes('<tool_call>')) {
+            hermesDetected = true;
+            // Everything from <tool_call> onward goes into hermesBuffer
+            // (already-yielded text before the tag is fine)
+            hermesBuffer += text;
+          } else if (hermesDetected) {
+            // Keep buffering — don't yield raw tags to frontend
+            hermesBuffer += text;
+          } else {
+            // Normal streaming: yield text immediately
+            yield text;
+          }
         }
 
         for (const toolCallDelta of delta.tool_calls ?? []) {
