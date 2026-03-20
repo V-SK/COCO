@@ -267,7 +267,7 @@ export function createRuntime(
           const cleanedText = fullText.replace(HERMES_TAG_RE, '').trim();
           const assistantMessage: LLMMessage = {
             role: 'assistant',
-            content: cleanedText || null,
+            content: cleanedText || '',
             toolCalls: cloneToolCalls(toolCalls),
           };
           messages.push(assistantMessage);
