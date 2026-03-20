@@ -11,7 +11,7 @@ interface ToolDef {
   function: {
     name: string;
     description: string;
-    parameters: unknown;
+    parameters: Record<string, unknown>;
   };
 }
 
