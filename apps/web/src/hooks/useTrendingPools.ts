@@ -234,7 +234,8 @@ export function useTrendingPools(initialChain: ChainId = 'bsc') {
       try {
         const pools = await fetchTrending(chain);
         setTokens(pools);
-      } catch {
+      } catch (err) {
+        console.error('[useTrendingPools] fetch error:', chain, err);
         /* keep stale */
       } finally {
         setLoading(false);
@@ -244,11 +245,15 @@ export function useTrendingPools(initialChain: ChainId = 'bsc') {
     [chain],
   );
 
+  /* Re-fetch when chain changes */
   useEffect(() => {
+    // Clear tokens immediately for visual feedback
+    setTokens([]);
+    setLoading(true);
     fetchAll();
     intervalRef.current = setInterval(() => fetchAll(true), 60_000);
     return () => clearInterval(intervalRef.current);
-  }, [fetchAll]);
+  }, [chain]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sorted = sortPools(tokens, sort);
 
