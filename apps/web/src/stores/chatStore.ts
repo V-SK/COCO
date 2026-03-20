@@ -61,6 +61,7 @@ interface ChatState {
   sessions: SessionInfo[];
   startNewChat: () => void;
   switchSession: (id: string) => void;
+  deleteSession: (id: string) => void;
   updateSessionTitle: (id: string, title: string) => void;
   handleChatEvent: (event: ChatEvent) => void;
 }
@@ -165,6 +166,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
       error: null,
       isLoading: false,
     });
+  },
+
+  deleteSession: (id: string) => {
+    const { sessionId, sessions } = get();
+    const remaining = sessions.filter((s) => s.id !== id);
+    saveSessions(remaining);
+    // If deleting the active session, switch to another or create new
+    if (id === sessionId) {
+      if (remaining.length > 0) {
+        const next = remaining[0];
+        localStorage.setItem(SESSION_KEY, next.id);
+        set({
+          sessionId: next.id,
+          sessions: remaining,
+          messages: [],
+          streamingContent: '',
+          pendingToolCall: null,
+          error: null,
+          isLoading: false,
+        });
+      } else {
+        // No sessions left — create a new one
+        const newId = crypto.randomUUID();
+        localStorage.setItem(SESSION_KEY, newId);
+        const newSessions = [{ id: newId, title: '新对话', updatedAt: Date.now() }];
+        saveSessions(newSessions);
+        set({
+          sessionId: newId,
+          sessions: newSessions,
+          messages: [],
+          streamingContent: '',
+          pendingToolCall: null,
+          error: null,
+          isLoading: false,
+        });
+      }
+    } else {
+      set({ sessions: remaining });
+    }
   },
 
   updateSessionTitle: (id: string, title: string) => {

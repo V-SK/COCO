@@ -30,6 +30,7 @@ export function Sidebar() {
   const sessions = useChatStore((state) => state.sessions);
   const startNewChat = useChatStore((state) => state.startNewChat);
   const switchSession = useChatStore((state) => state.switchSession);
+  const deleteSession = useChatStore((state) => state.deleteSession);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [walletLoading, setWalletLoading] = useState(false);
@@ -126,27 +127,43 @@ export function Sidebar() {
                 对话记录
               </p>
               {sortedSessions.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleSwitchSession(s.id)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition ${
-                    s.id === sessionId
-                      ? 'bg-primary/10 text-white'
-                      : 'text-neutral-400 hover:bg-surface/50 hover:text-neutral-200'
-                  }`}
-                >
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                  </svg>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">{s.title}</p>
-                    <p className="text-[10px] text-neutral-600">{timeAgo(s.updatedAt)}</p>
-                  </div>
-                  {s.id === sessionId && (
-                    <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  )}
-                </button>
+                <div key={s.id} className="group relative flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchSession(s.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 pr-8 text-left text-sm transition ${
+                      s.id === sessionId
+                        ? 'bg-primary/10 text-white'
+                        : 'text-neutral-400 hover:bg-surface/50 hover:text-neutral-200'
+                    }`}
+                  >
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-40">
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm">{s.title}</p>
+                      <p className="text-[10px] text-neutral-600">{timeAgo(s.updatedAt)}</p>
+                    </div>
+                    {s.id === sessionId && (
+                      <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      haptic();
+                      deleteSession(s.id);
+                    }}
+                    className="absolute right-1.5 flex h-6 w-6 items-center justify-center rounded-md text-neutral-600 opacity-0 transition hover:bg-red-500/20 hover:text-red-400 group-hover:opacity-100"
+                    aria-label="删除对话"
+                  >
+                    <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
+                  </button>
+                </div>
               ))}
             </div>
           ) : (
