@@ -227,24 +227,30 @@ export function createRuntime(
         const toolParams = { address };
         yield { type: 'tool_call', toolId: 'scan.contract', params: toolParams };
 
-        const result = await runtime.invokeTool('scan.contract', ctx, toolParams);
-        yield { type: 'tool_result', toolId: 'scan.contract', result };
+        try {
+          const result = await runtime.invokeTool('scan.contract', ctx, toolParams);
+          logger.info({ address, success: result.success, hasText: !!result.text, hasData: !!result.data }, 'Contract interceptor: scan complete');
+          yield { type: 'tool_result', toolId: 'scan.contract', result };
 
-        // Save to session memory
-        const interceptMessages: LLMMessage[] = [
-          { role: 'user', content: message },
-          {
-            role: 'assistant',
-            content: '',
-            toolCalls: [{ id: 'intercept_scan_0', name: 'scan.contract', arguments: JSON.stringify(toolParams) }],
-          },
-          {
-            role: 'tool',
-            toolCallId: 'intercept_scan_0',
-            content: safeJsonStringify(result),
-          },
-        ];
-        await memory.appendMessages(ctx.sessionId, interceptMessages);
+          // Save to session memory
+          const interceptMessages: LLMMessage[] = [
+            { role: 'user', content: message },
+            {
+              role: 'assistant',
+              content: '',
+              toolCalls: [{ id: 'intercept_scan_0', name: 'scan.contract', arguments: JSON.stringify(toolParams) }],
+            },
+            {
+              role: 'tool',
+              toolCallId: 'intercept_scan_0',
+              content: safeJsonStringify(result),
+            },
+          ];
+          await memory.appendMessages(ctx.sessionId, interceptMessages);
+        } catch (err) {
+          logger.error({ address, error: err }, 'Contract interceptor: scan failed');
+          yield { type: 'error', error: err instanceof Error ? err.message : 'Scan failed', code: 'interceptor_error' };
+        }
 
         yield { type: 'done' };
         return;
