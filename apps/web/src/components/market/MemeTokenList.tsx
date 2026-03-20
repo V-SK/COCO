@@ -1,4 +1,4 @@
-import type { MemeToken } from '@/hooks/useDexTrending';
+import type { PoolToken } from '@/hooks/useTrendingPools';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ── Helpers ── */
@@ -16,35 +16,26 @@ function formatAge(timestamp: number): string {
   return `${months}mo`;
 }
 
-function formatPrice(price: number): string {
-  if (price >= 1000) return `$${price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  if (price >= 1) return `$${price.toFixed(2)}`;
-  if (price >= 0.001) return `$${price.toFixed(4)}`;
-  if (price >= 0.000001) return `$${price.toFixed(6)}`;
-  /* For extremely small prices, use subscript notation */
-  const str = price.toFixed(18);
-  const match = str.match(/^0\.(0+)([1-9]\d{0,3})/);
-  if (match) {
-    const zeros = match[1].length;
-    const sig = match[2];
-    return `$0.0{${zeros}}${sig}`;
-  }
-  return `$${price.toExponential(2)}`;
-}
-
 function formatCompact(n: number): string {
+  if (!n || n === 0) return '-';
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
   if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
   return `$${n.toFixed(0)}`;
 }
 
+function formatVol(n: number): string {
+  if (!n || n === 0) return '-';
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return `${n.toFixed(0)}`;
+}
+
 /* ── Token Avatar ── */
-function TokenAvatar({ token }: { token: MemeToken }) {
+function TokenAvatar({ token }: { token: PoolToken }) {
   const [failed, setFailed] = useState(false);
 
   if (!token.imageUrl || failed) {
-    /* Generate a consistent color from token name */
     let hash = 0;
     for (let i = 0; i < token.symbol.length; i++) {
       hash = token.symbol.charCodeAt(i) + ((hash << 5) - hash);
@@ -82,49 +73,16 @@ function SkeletonRow({ delay }: { delay: number }) {
         animate-fade-in-up [animation-fill-mode:backwards]"
       style={{ animationDelay: `${delay}ms` }}
     >
-      {/* Avatar skeleton */}
       <div className="h-9 w-9 shrink-0 rounded-full bg-surface/60 shimmer-bg" />
-      {/* Text skeleton */}
       <div className="flex-1 space-y-2">
         <div className="h-3.5 w-20 rounded bg-surface/60 shimmer-bg" />
         <div className="h-3 w-14 rounded bg-surface/40 shimmer-bg" />
       </div>
-      {/* Right skeleton */}
       <div className="space-y-2 text-right">
         <div className="ml-auto h-3.5 w-16 rounded bg-surface/60 shimmer-bg" />
         <div className="ml-auto h-3 w-12 rounded bg-surface/40 shimmer-bg" />
       </div>
     </div>
-  );
-}
-
-/* ── Price Change Badge ── */
-function PriceChangeBadge({ value }: { value: number }) {
-  const [flash, setFlash] = useState(false);
-  const prevRef = useRef(value);
-
-  useEffect(() => {
-    if (prevRef.current !== value) {
-      setFlash(true);
-      prevRef.current = value;
-      const t = setTimeout(() => setFlash(false), 600);
-      return () => clearTimeout(t);
-    }
-  }, [value]);
-
-  const up = value >= 0;
-
-  return (
-    <span
-      className={`
-        inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold
-        transition-colors duration-200
-        ${up ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}
-        ${flash ? (up ? 'price-flash-green' : 'price-flash-red') : ''}
-      `}
-    >
-      {up ? '+' : ''}{value.toFixed(2)}%
-    </span>
   );
 }
 
@@ -134,10 +92,13 @@ function MemeTokenRow({
   index,
   onClick,
 }: {
-  token: MemeToken;
+  token: PoolToken;
   index: number;
   onClick: () => void;
 }) {
+  const up = token.priceChange1h >= 0;
+  const txCount = token.txBuys24h + token.txSells24h;
+
   return (
     <button
       type="button"
@@ -165,23 +126,26 @@ function MemeTokenRow({
           </span>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-neutral-500">
-          <span className="truncate">{token.name}</span>
-          {token.liquidity > 0 && (
-            <span className="shrink-0">💧{formatCompact(token.liquidity)}</span>
+          <span>Vol ${formatVol(token.volume24h)}</span>
+          {txCount > 0 && (
+            <span className="shrink-0">🔄{txCount}</span>
           )}
         </div>
       </div>
 
-      {/* Price + Change */}
+      {/* Mcap + 1h change */}
       <div className="shrink-0 text-right">
         <p className="font-mono text-[13px] font-semibold text-white">
-          {formatPrice(token.priceUsd)}
+          {formatCompact(token.marketCap || token.fdv)}
         </p>
-        <div className="mt-0.5 flex items-center justify-end gap-1.5">
-          <span className="text-[10px] text-neutral-500">
-            {formatCompact(token.marketCap)}
+        <div className="mt-0.5">
+          <span
+            className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
+              up ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
+            }`}
+          >
+            {up ? '▲' : '▼'} {up ? '+' : ''}{token.priceChange1h.toFixed(2)}%
           </span>
-          <PriceChangeBadge value={token.priceChange24h} />
         </div>
       </div>
     </button>
@@ -216,7 +180,6 @@ function PullToRefresh({
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!pulling.current) return;
     const dy = Math.max(0, e.touches[0].clientY - startY.current);
-    /* Resistance curve */
     setPullDist(Math.min(dy * 0.4, 80));
   }, []);
 
@@ -230,7 +193,6 @@ function PullToRefresh({
     setPullDist(0);
   }, [pullDist, onRefresh, threshold]);
 
-  /* Reset after refresh completes */
   useEffect(() => {
     if (!refreshing && released) {
       const t = setTimeout(() => setReleased(false), 300);
@@ -246,7 +208,6 @@ function PullToRefresh({
       onTouchEnd={handleTouchEnd}
       className="relative"
     >
-      {/* Pull indicator */}
       <div
         className="flex items-center justify-center overflow-hidden transition-all duration-200"
         style={{
@@ -280,11 +241,11 @@ export function MemeTokenList({
   onRefresh,
   onTokenClick,
 }: {
-  tokens: MemeToken[];
+  tokens: PoolToken[];
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
-  onTokenClick: (token: MemeToken) => void;
+  onTokenClick: (token: PoolToken) => void;
 }) {
   const [fadeKey, setFadeKey] = useState(0);
   const prevTokensRef = useRef<string>('');
@@ -340,13 +301,13 @@ export function MemeTokenList({
           <span>代币</span>
           <div className="flex items-center gap-4">
             <span>市值</span>
-            <span className="w-14 text-right">24h</span>
+            <span className="w-14 text-right">1h</span>
           </div>
         </div>
 
         {tokens.map((token, i) => (
           <MemeTokenRow
-            key={`${token.chainId}:${token.address}`}
+            key={`${token.chainId}:${token.pairAddress || token.address}`}
             token={token}
             index={i}
             onClick={() => onTokenClick(token)}
@@ -355,7 +316,7 @@ export function MemeTokenList({
 
         {/* Bottom count */}
         <p className="py-2 text-center text-[10px] text-neutral-600">
-          共 {tokens.length} 个代币 · DexScreener
+          共 {tokens.length} 个代币 · GeckoTerminal
         </p>
       </div>
     </PullToRefresh>

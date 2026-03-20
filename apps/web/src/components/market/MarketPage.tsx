@@ -1,11 +1,11 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
-import type { MemeToken } from '@/hooks/useDexTrending';
-import { useDexTrending } from '@/hooks/useDexTrending';
+import type { PoolToken } from '@/hooks/useTrendingPools';
+import { useTrendingPools, searchPools } from '@/hooks/useTrendingPools';
 import { ChainFilter } from './ChainFilter';
 import { SortTabs } from './SortTabs';
 import { MemeTokenList } from './MemeTokenList';
-import { KlineSheet } from './KlineSheet';
-import { useEffect, useRef, useState } from 'react';
+import { TokenDetailPage } from './TokenDetailPage';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function formatVolume(vol: number): string {
   if (vol >= 1e12) return `$${(vol / 1e12).toFixed(1)}万亿`;
@@ -49,7 +49,7 @@ function StatCard({
 }
 
 /* ── TradingView mini chart ── */
-function TvChart({ symbol, onClick }: { symbol: string; onClick: () => void }) {
+function TvChart({ symbol }: { symbol: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,10 +74,7 @@ function TvChart({ symbol, onClick }: { symbol: string; onClick: () => void }) {
   }, [symbol]);
 
   return (
-    <div
-      className="cursor-pointer overflow-hidden rounded-xl border border-border/30 bg-surface/30 transition-colors hover:border-primary/30"
-      onClick={onClick}
-    >
+    <div className="overflow-hidden rounded-xl border border-border/30 bg-surface/30">
       <div ref={ref} className="pointer-events-none h-[180px] w-full" />
     </div>
   );
@@ -94,10 +91,79 @@ function SectionDivider() {
   );
 }
 
+/* ── Search Bar ── */
+function SearchBar({
+  onSearch,
+  searching,
+}: {
+  onSearch: (query: string) => void;
+  searching: boolean;
+}) {
+  const [value, setValue] = useState('');
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value;
+      setValue(v);
+      clearTimeout(timerRef.current);
+      if (v.trim().length >= 2) {
+        timerRef.current = setTimeout(() => onSearch(v.trim()), 400);
+      } else if (v.trim().length === 0) {
+        onSearch('');
+      }
+    },
+    [onSearch],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && value.trim()) {
+        clearTimeout(timerRef.current);
+        onSearch(value.trim());
+      }
+    },
+    [value, onSearch],
+  );
+
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+        {searching ? (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
+        ) : (
+          <span className="text-sm text-neutral-500">🔍</span>
+        )}
+      </div>
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder="搜索合约地址 / 代币名称"
+        className="w-full rounded-xl border border-border/40 bg-surface/30 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-neutral-600 focus:border-primary/50 focus:bg-surface/50 transition-all duration-200"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => {
+            setValue('');
+            onSearch('');
+          }}
+          className="absolute inset-y-0 right-3 flex items-center text-neutral-500 hover:text-white"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ── Main ── */
 export function MarketPage({ tickers }: { tickers: TickerData[] }) {
-  const [selectedTicker, setSelectedTicker] = useState<TickerData | null>(null);
-  const [selectedMeme, setSelectedMeme] = useState<MemeToken | null>(null);
+  const [detailToken, setDetailToken] = useState<PoolToken | null>(null);
+  const [searchResults, setSearchResults] = useState<PoolToken[] | null>(null);
+  const [searching, setSearching] = useState(false);
 
   const {
     tokens: memeTokens,
@@ -108,16 +174,47 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
     loading: memeLoading,
     refreshing: memeRefreshing,
     refresh: memeRefresh,
-  } = useDexTrending('bsc');
+  } = useTrendingPools('bsc');
 
   const positive = tickers.filter((t) => t.change24h >= 0).length;
   const negative = tickers.length - positive;
   const totalVolume = tickers.reduce((sum, t) => sum + t.volume24h, 0);
 
-  // Keep selected ticker's price updated
-  const liveTicker = selectedTicker
-    ? tickers.find((t) => t.symbol === selectedTicker.symbol) ?? selectedTicker
-    : null;
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query) {
+        setSearchResults(null);
+        return;
+      }
+      setSearching(true);
+      try {
+        const results = await searchPools(query, chain);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    },
+    [chain],
+  );
+
+  /* Clear search when chain changes */
+  useEffect(() => {
+    setSearchResults(null);
+  }, [chain]);
+
+  const displayTokens = searchResults ?? memeTokens;
+
+  /* Detail view — full screen slide-in */
+  if (detailToken) {
+    return (
+      <TokenDetailPage
+        token={detailToken}
+        onBack={() => setDetailToken(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
@@ -138,19 +235,16 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
         {/* Charts */}
         {tickers.length >= 2 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <TvChart
-              symbol="BTC"
-              onClick={() => setSelectedTicker(tickers.find((t) => t.symbol === 'BTC') ?? null)}
-            />
-            <TvChart
-              symbol="ETH"
-              onClick={() => setSelectedTicker(tickers.find((t) => t.symbol === 'ETH') ?? null)}
-            />
+            <TvChart symbol="BTC" />
+            <TvChart symbol="ETH" />
           </div>
         ) : null}
 
         {/* ─── Meme Trending Section ─── */}
         <SectionDivider />
+
+        {/* Search bar */}
+        <SearchBar onSearch={handleSearch} searching={searching} />
 
         {/* Chain filter */}
         <div className="flex items-center justify-between">
@@ -165,29 +259,13 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
 
         {/* Meme token list */}
         <MemeTokenList
-          tokens={memeTokens}
-          loading={memeLoading}
+          tokens={displayTokens}
+          loading={searchResults === null ? memeLoading : searching}
           refreshing={memeRefreshing}
           onRefresh={memeRefresh}
-          onTokenClick={(token) => setSelectedMeme(token)}
+          onTokenClick={(token) => setDetailToken(token)}
         />
       </div>
-
-      {/* K-line sheet for Binance tokens (BTC/ETH) */}
-      {liveTicker && (
-        <KlineSheet
-          ticker={liveTicker}
-          onClose={() => setSelectedTicker(null)}
-        />
-      )}
-
-      {/* K-line sheet for meme tokens (DexScreener) */}
-      {selectedMeme && (
-        <KlineSheet
-          memeToken={selectedMeme}
-          onClose={() => setSelectedMeme(null)}
-        />
-      )}
     </div>
   );
 }

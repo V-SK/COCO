@@ -107,3 +107,22 @@
 .kline-backdrop-in {
   animation: klineBackdropIn 0.25s ease-out;
 }
+
+/* ── Token detail slide-in from right ── */
+@keyframes detailSlideIn {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+
+.detail-slide-in {
+  animation: detailSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* ── Hide scrollbar for metric cards ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

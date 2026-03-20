@@ -1,10 +1,10 @@
-import type { ChainId } from '@/hooks/useDexTrending';
+import type { ChainId } from '@/hooks/useTrendingPools';
 
-const CHAINS: { id: ChainId; label: string; color: string; icon: string }[] = [
-  { id: 'bsc', label: 'BSC', color: '#F0B90B', icon: '🟡' },
-  { id: 'ethereum', label: 'ETH', color: '#627EEA', icon: '🔷' },
-  { id: 'solana', label: 'SOL', color: '#9945FF', icon: '🟣' },
-  { id: 'base', label: 'BASE', color: '#0052FF', icon: '🔵' },
+const CHAINS: { id: ChainId; label: string; color: string }[] = [
+  { id: 'bsc', label: 'BSC', color: '#F0B90B' },
+  { id: 'eth', label: 'ETH', color: '#627EEA' },
+  { id: 'solana', label: 'SOL', color: '#9945FF' },
+  { id: 'base', label: 'BASE', color: '#0052FF' },
 ];
 
 export function ChainFilter({

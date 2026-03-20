@@ -1,4 +1,4 @@
-import type { SortMode } from '@/hooks/useDexTrending';
+import type { SortMode } from '@/hooks/useTrendingPools';
 import { useEffect, useRef, useState } from 'react';
 
 const TABS: { id: SortMode; label: string; icon: string }[] = [
