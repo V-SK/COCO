@@ -1,4 +1,9 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
+import type { MemeToken } from '@/hooks/useDexTrending';
+import { useDexTrending } from '@/hooks/useDexTrending';
+import { ChainFilter } from './ChainFilter';
+import { SortTabs } from './SortTabs';
+import { MemeTokenList } from './MemeTokenList';
 import { KlineSheet } from './KlineSheet';
 import { useEffect, useRef, useState } from 'react';
 
@@ -65,48 +70,6 @@ function StatCard({
   );
 }
 
-/* ── Token row (clickable) ── */
-function TokenRow({
-  ticker,
-  index,
-  onClick,
-}: {
-  ticker: TickerData;
-  index: number;
-  onClick: () => void;
-}) {
-  const up = ticker.change24h >= 0;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="animate-fade-in-up flex w-full items-center justify-between rounded-xl border border-border/30 bg-surface/30 px-4 py-3 text-left transition-colors hover:bg-surface/60 active:scale-[0.98] [animation-fill-mode:backwards]"
-      style={{ animationDelay: `${80 + index * 40}ms` }}
-    >
-      <div className="flex items-center gap-3">
-        <CoinIcon symbol={ticker.symbol} />
-        <div>
-          <p className="text-sm font-semibold text-white">{ticker.symbol}</p>
-          <p className="text-xs text-neutral-500">{ticker.name}</p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="font-mono text-sm font-semibold text-white">
-          ${ticker.price < 1 ? ticker.price.toFixed(4) : ticker.price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-        </p>
-        <span
-          className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium ${
-            up ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
-          }`}
-        >
-          {up ? '↑' : '↓'} {up ? '+' : ''}{ticker.change24h.toFixed(2)}%
-        </span>
-      </div>
-    </button>
-  );
-}
-
 /* ── TradingView mini chart ── */
 function TvChart({ symbol, onClick }: { symbol: string; onClick: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -142,9 +105,32 @@ function TvChart({ symbol, onClick }: { symbol: string; onClick: () => void }) {
   );
 }
 
+/* ── Section Divider ── */
+function SectionDivider() {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+      <span className="text-[10px] font-medium tracking-wider text-neutral-600">MEME</span>
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+    </div>
+  );
+}
+
 /* ── Main ── */
 export function MarketPage({ tickers }: { tickers: TickerData[] }) {
   const [selectedTicker, setSelectedTicker] = useState<TickerData | null>(null);
+  const [selectedMeme, setSelectedMeme] = useState<MemeToken | null>(null);
+
+  const {
+    tokens: memeTokens,
+    chain,
+    setChain,
+    sort,
+    setSort,
+    loading: memeLoading,
+    refreshing: memeRefreshing,
+    refresh: memeRefresh,
+  } = useDexTrending('bsc');
 
   const positive = tickers.filter((t) => t.change24h >= 0).length;
   const negative = tickers.length - positive;
@@ -185,25 +171,43 @@ export function MarketPage({ tickers }: { tickers: TickerData[] }) {
           </div>
         ) : null}
 
-        {/* Token list */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-neutral-400">实时行情</h3>
-          {tickers.map((ticker, i) => (
-            <TokenRow
-              key={ticker.symbol}
-              ticker={ticker}
-              index={i}
-              onClick={() => setSelectedTicker(ticker)}
-            />
-          ))}
+        {/* ─── Meme Trending Section ─── */}
+        <SectionDivider />
+
+        {/* Chain filter */}
+        <div className="flex items-center justify-between">
+          <ChainFilter active={chain} onChange={setChain} />
+          {memeRefreshing && (
+            <div className="h-3 w-3 animate-spin rounded-full border border-primary/40 border-t-primary" />
+          )}
         </div>
+
+        {/* Sort tabs */}
+        <SortTabs active={sort} onChange={setSort} />
+
+        {/* Meme token list */}
+        <MemeTokenList
+          tokens={memeTokens}
+          loading={memeLoading}
+          refreshing={memeRefreshing}
+          onRefresh={memeRefresh}
+          onTokenClick={(token) => setSelectedMeme(token)}
+        />
       </div>
 
-      {/* K-line sheet */}
+      {/* K-line sheet for Binance tokens (BTC/ETH) */}
       {liveTicker && (
         <KlineSheet
           ticker={liveTicker}
           onClose={() => setSelectedTicker(null)}
+        />
+      )}
+
+      {/* K-line sheet for meme tokens (DexScreener) */}
+      {selectedMeme && (
+        <KlineSheet
+          memeToken={selectedMeme}
+          onClose={() => setSelectedMeme(null)}
         />
       )}
     </div>

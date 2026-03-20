@@ -55,3 +55,55 @@
   0%, 100% { box-shadow: 0 0 4px rgba(240, 185, 11, 0.4); }
   50% { box-shadow: 0 0 8px rgba(240, 185, 11, 0.7); }
 }
+
+/* ── Shimmer skeleton background ── */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Price flash animations ── */
+@keyframes priceFlashGreen {
+  0% { background-color: rgba(52, 211, 153, 0.1); }
+  30% { background-color: rgba(52, 211, 153, 0.3); }
+  100% { background-color: rgba(52, 211, 153, 0.1); }
+}
+
+@keyframes priceFlashRed {
+  0% { background-color: rgba(248, 113, 113, 0.1); }
+  30% { background-color: rgba(248, 113, 113, 0.3); }
+  100% { background-color: rgba(248, 113, 113, 0.1); }
+}
+
+.price-flash-green {
+  animation: priceFlashGreen 0.6s ease-out;
+}
+
+.price-flash-red {
+  animation: priceFlashRed 0.6s ease-out;
+}
+
+/* ── KlineSheet animations ── */
+@keyframes klineSlideUp {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes klineBackdropIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.kline-slide-up {
+  animation: klineSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kline-backdrop-in {
+  animation: klineBackdropIn 0.25s ease-out;
+}

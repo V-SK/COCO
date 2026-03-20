@@ -1,4 +1,5 @@
 import type { TickerData } from '@/hooks/useBinanceTickers';
+import type { MemeToken } from '@/hooks/useDexTrending';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type {
   CandlestickData,
@@ -33,7 +34,23 @@ const REST_URLS = [
   'https://api.binance.com/api/v3/klines',
 ];
 
-/* ── Fetch klines ── */
+/* ── Copy toast ── */
+function CopyToast({ visible }: { visible: boolean }) {
+  return (
+    <div
+      className={`
+        fixed left-1/2 top-16 z-[60] -translate-x-1/2
+        rounded-lg bg-success/90 px-4 py-2 text-sm font-medium text-white shadow-lg
+        transition-all duration-300
+        ${visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}
+      `}
+    >
+      ✓ 已复制
+    </div>
+  );
+}
+
+/* ── Fetch klines (Binance) ── */
 async function fetchKlines(
   symbol: string,
   interval: Interval,
@@ -63,13 +80,98 @@ async function fetchKlines(
   return [];
 }
 
-/* ── Component ── */
-export function KlineSheet({
-  ticker,
-  onClose,
+/* ── Helpers ── */
+function formatVolume(vol: number): string {
+  if (vol >= 1e12) return `$${(vol / 1e12).toFixed(1)}万亿`;
+  if (vol >= 1e8) return `$${(vol / 1e8).toFixed(1)}亿`;
+  if (vol >= 1e6) return `$${(vol / 1e6).toFixed(1)}M`;
+  if (vol >= 1e4) return `$${(vol / 1e4).toFixed(1)}万`;
+  if (vol >= 1e3) return `$${(vol / 1e3).toFixed(1)}K`;
+  return `$${vol.toFixed(0)}`;
+}
+
+function formatAge(timestamp: number): string {
+  if (!timestamp) return '?';
+  const diff = Date.now() - timestamp;
+  const hours = Math.floor(diff / 3_600_000);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  return `${Math.floor(days / 30)}mo`;
+}
+
+function truncateAddress(addr: string): string {
+  if (addr.length <= 12) return addr;
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function CoinIcon({ symbol, imageUrl }: { symbol: string; imageUrl?: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = imageUrl || `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+
+  if (failed) {
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+        {symbol.slice(0, 3)}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={symbol}
+      className="h-10 w-10 rounded-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/* ── DexScreener Embed (for meme tokens) ── */
+function DexScreenerEmbed({ chainId, address }: { chainId: string; address: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  /* Map chainId to DexScreener path */
+  const chainPath =
+    chainId === 'bsc'
+      ? 'bsc'
+      : chainId === 'ethereum'
+        ? 'ethereum'
+        : chainId === 'solana'
+          ? 'solana'
+          : chainId === 'base'
+            ? 'base'
+            : chainId;
+
+  return (
+    <div className="relative h-full w-full overflow-hidden rounded-lg">
+      {!loaded && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      )}
+      <iframe
+        src={`https://dexscreener.com/${chainPath}/${address}?embed=1&loadChartSettings=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15`}
+        className="h-full w-full border-0"
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        onLoad={() => setLoaded(true)}
+        title="DexScreener Chart"
+        allow="clipboard-write"
+        sandbox="allow-scripts allow-same-origin allow-popups"
+      />
+    </div>
+  );
+}
+
+/* ── Binance KlineSheet ── */
+function BinanceChart({
+  symbol,
+  interval,
+  onLoaded,
 }: {
-  ticker: TickerData;
-  onClose: () => void;
+  symbol: string;
+  interval: Interval;
+  onLoaded: () => void;
 }) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,16 +180,6 @@ export function KlineSheet({
   const candleRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const volRef = useRef<any>(null);
-  const [interval, setInterval_] = useState<Interval>('1h');
-  const [loading, setLoading] = useState(true);
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
-
-  // Touch-to-dismiss state
-  const touchStartY = useRef(0);
-  const dragging = useRef(false);
-
-  const up = ticker.change24h >= 0;
 
   // Create chart once
   useEffect(() => {
@@ -127,7 +219,6 @@ export function KlineSheet({
         handleScale: { axisPressedMouseMove: { time: true, price: false } },
       });
 
-      // v5 API: addSeries(SeriesDefinition, options)
       const candles = chart.addSeries(lc.CandlestickSeries, {
         upColor: '#34D399',
         downColor: '#F87171',
@@ -150,7 +241,6 @@ export function KlineSheet({
       candleRef.current = candles;
       volRef.current = vol;
 
-      // Resize observer
       const ro = new ResizeObserver((entries) => {
         const { width, height } = entries[0].contentRect;
         chart.applyOptions({ width, height });
@@ -170,13 +260,12 @@ export function KlineSheet({
     };
   }, []);
 
-  // Load data when interval changes
+  // Load data when interval or symbol changes
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
-      const data = await fetchKlines(ticker.symbol, interval);
+      const data = await fetchKlines(symbol, interval);
       if (cancelled || !candleRef.current || !volRef.current) return;
 
       const candles: CandlestickData[] = data.map((d) => ({
@@ -196,7 +285,7 @@ export function KlineSheet({
       candleRef.current.setData(candles);
       volRef.current.setData(vols);
       chartRef.current?.timeScale().fitContent();
-      setLoading(false);
+      onLoaded();
     }
 
     const t = setTimeout(load, 50);
@@ -204,7 +293,61 @@ export function KlineSheet({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [ticker.symbol, interval]);
+  }, [symbol, interval, onLoaded]);
+
+  return <div ref={chartContainerRef} className="h-full w-full" />;
+}
+
+/* ── Component ── */
+export function KlineSheet({
+  ticker,
+  memeToken,
+  onClose,
+}: {
+  ticker?: TickerData;
+  memeToken?: MemeToken;
+  onClose: () => void;
+}) {
+  const isMeme = !!memeToken;
+  const [interval, setInterval_] = useState<Interval>('1h');
+  const [loading, setLoading] = useState(true);
+  const [copyToast, setCopyToast] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Touch-to-dismiss state
+  const touchStartY = useRef(0);
+  const dragging = useRef(false);
+
+  // Derive display info from either source
+  const symbol = ticker?.symbol ?? memeToken?.symbol ?? '??';
+  const name = ticker?.name ?? memeToken?.name ?? '';
+  const price = ticker?.price ?? memeToken?.priceUsd ?? 0;
+  const change = ticker?.change24h ?? memeToken?.priceChange24h ?? 0;
+  const up = change >= 0;
+  const imageUrl = memeToken?.imageUrl;
+
+  const handleChartLoaded = useCallback(() => setLoading(false), []);
+
+  /* Copy contract address */
+  const copyContract = useCallback(async () => {
+    if (!memeToken?.address) return;
+    try {
+      await navigator.clipboard.writeText(memeToken.address);
+    } catch {
+      /* Fallback for older browsers */
+      const ta = document.createElement('textarea');
+      ta.value = memeToken.address;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopyToast(true);
+    setTimeout(() => setCopyToast(false), 1500);
+  }, [memeToken?.address]);
 
   // Slide-down to dismiss
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -240,6 +383,8 @@ export function KlineSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
+      <CopyToast visible={copyToast} />
+
       {/* Backdrop */}
       <div
         ref={backdropRef}
@@ -251,7 +396,7 @@ export function KlineSheet({
       <div
         ref={sheetRef}
         className="relative z-10 flex flex-col rounded-t-2xl border-t border-border/50 bg-background kline-slide-up transition-transform"
-        style={{ maxHeight: '75dvh' }}
+        style={{ maxHeight: '80dvh' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -262,22 +407,30 @@ export function KlineSheet({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pb-3">
+        <div className="flex items-center justify-between px-4 pb-2">
           <div className="flex items-center gap-3">
-            <CoinIcon symbol={ticker.symbol} />
+            <CoinIcon symbol={symbol} imageUrl={imageUrl} />
             <div>
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-white">{ticker.symbol}</span>
-                <span className="text-xs text-neutral-500">/USDT</span>
+                <span className="text-lg font-bold text-white">{symbol}</span>
+                {isMeme ? (
+                  <span className="text-[11px] text-neutral-500">{name}</span>
+                ) : (
+                  <span className="text-xs text-neutral-500">/USDT</span>
+                )}
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-xl font-bold text-white">
-                  ${ticker.price < 1 ? ticker.price.toFixed(6) : ticker.price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                  ${price < 1
+                    ? price < 0.000001
+                      ? price.toExponential(2)
+                      : price.toFixed(6)
+                    : price.toLocaleString('en-US', { maximumFractionDigits: 2 })}
                 </span>
                 <span
                   className={`text-sm font-medium ${up ? 'text-success' : 'text-error'}`}
                 >
-                  {up ? '+' : ''}{ticker.change24h.toFixed(2)}%
+                  {up ? '+' : ''}{change.toFixed(2)}%
                 </span>
               </div>
             </div>
@@ -294,93 +447,112 @@ export function KlineSheet({
           </button>
         </div>
 
-        {/* Interval tabs */}
-        <div className="flex gap-1 px-4 pb-3">
-          {INTERVALS.map((iv) => (
+        {/* Contract address bar for meme tokens */}
+        {isMeme && memeToken && (
+          <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-surface/40 px-3 py-1.5">
+            <span className="text-[10px] text-neutral-500">合约</span>
+            <span className="flex-1 font-mono text-[11px] text-neutral-300 select-all">
+              {truncateAddress(memeToken.address)}
+            </span>
             <button
-              key={iv.value}
               type="button"
-              onClick={() => setInterval_(iv.value)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                interval === iv.value
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-neutral-500 hover:text-neutral-300'
-              }`}
+              onClick={copyContract}
+              className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary transition-all duration-200 hover:bg-primary/20 active:scale-95"
             >
-              {iv.label}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3 w-3">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+              复制合约
             </button>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Interval tabs (only for Binance tokens) */}
+        {!isMeme && (
+          <div className="flex gap-1 px-4 pb-3">
+            {INTERVALS.map((iv) => (
+              <button
+                key={iv.value}
+                type="button"
+                onClick={() => setInterval_(iv.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  interval === iv.value
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                {iv.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Chart */}
-        <div className="relative flex-1 px-2 pb-4" style={{ minHeight: '320px' }}>
+        <div className="relative flex-1 px-2 pb-2" style={{ minHeight: isMeme ? '360px' : '320px' }}>
           {loading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           )}
-          <div ref={chartContainerRef} className="h-full w-full" />
+
+          {isMeme && memeToken ? (
+            <DexScreenerEmbed chainId={memeToken.chainId} address={memeToken.pairAddress || memeToken.address} />
+          ) : ticker ? (
+            <BinanceChart symbol={ticker.symbol} interval={interval} onLoaded={handleChartLoaded} />
+          ) : null}
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2 border-t border-border/30 px-4 py-3">
-          <div>
-            <p className="text-[10px] text-neutral-500">24h 高</p>
-            <p className="font-mono text-xs text-white">
-              ${ticker.high24h < 1 ? ticker.high24h.toFixed(4) : ticker.high24h.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-            </p>
+        {isMeme && memeToken ? (
+          <div className="grid grid-cols-4 gap-2 border-t border-border/30 px-4 py-3">
+            <div>
+              <p className="text-[10px] text-neutral-500">流动性</p>
+              <p className="font-mono text-xs text-white">{formatVolume(memeToken.liquidity)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">市值</p>
+              <p className="font-mono text-xs text-white">{formatVolume(memeToken.marketCap)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">24h 量</p>
+              <p className="font-mono text-xs text-white">{formatVolume(memeToken.volume24h)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">创建</p>
+              <p className="font-mono text-xs text-white">{formatAge(memeToken.pairCreatedAt)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] text-neutral-500">24h 低</p>
-            <p className="font-mono text-xs text-white">
-              ${ticker.low24h < 1 ? ticker.low24h.toFixed(4) : ticker.low24h.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-            </p>
+        ) : ticker ? (
+          <div className="grid grid-cols-4 gap-2 border-t border-border/30 px-4 py-3">
+            <div>
+              <p className="text-[10px] text-neutral-500">24h 高</p>
+              <p className="font-mono text-xs text-white">
+                ${ticker.high24h < 1 ? ticker.high24h.toFixed(4) : ticker.high24h.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">24h 低</p>
+              <p className="font-mono text-xs text-white">
+                ${ticker.low24h < 1 ? ticker.low24h.toFixed(4) : ticker.low24h.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">24h 量</p>
+              <p className="font-mono text-xs text-white">{formatVolume(ticker.volume24h)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-neutral-500">振幅</p>
+              <p className="font-mono text-xs text-white">
+                {ticker.high24h > 0
+                  ? (((ticker.high24h - ticker.low24h) / ticker.low24h) * 100).toFixed(2)
+                  : '0.00'}
+                %
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] text-neutral-500">24h 量</p>
-            <p className="font-mono text-xs text-white">{formatVolume(ticker.volume24h)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-500">振幅</p>
-            <p className="font-mono text-xs text-white">
-              {ticker.high24h > 0
-                ? (((ticker.high24h - ticker.low24h) / ticker.low24h) * 100).toFixed(2)
-                : '0.00'}
-              %
-            </p>
-          </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
-}
-
-/* ── Helpers ── */
-function CoinIcon({ symbol }: { symbol: string }) {
-  const [failed, setFailed] = useState(false);
-  const src = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
-
-  if (failed) {
-    return (
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-        {symbol.slice(0, 3)}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={symbol}
-      className="h-10 w-10 rounded-lg object-contain"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-function formatVolume(vol: number): string {
-  if (vol >= 1e12) return `$${(vol / 1e12).toFixed(1)}万亿`;
-  if (vol >= 1e8) return `$${(vol / 1e8).toFixed(1)}亿`;
-  if (vol >= 1e4) return `$${(vol / 1e4).toFixed(1)}万`;
-  return `$${vol.toFixed(0)}`;
 }
