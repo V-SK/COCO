@@ -201,8 +201,8 @@ export function useDexTrending(initialChain: ChainId = 'bsc') {
   const [sort, setSort] = useState<SortMode>('hot');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
-  const abortRef = useRef<AbortController>();
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const abortRef = useRef<AbortController>(undefined);
 
   const fetchAll = useCallback(
     async (isRefresh = false) => {

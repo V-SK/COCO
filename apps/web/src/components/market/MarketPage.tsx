@@ -14,28 +14,6 @@ function formatVolume(vol: number): string {
   return `$${vol.toFixed(0)}`;
 }
 
-function CoinIcon({ symbol }: { symbol: string }) {
-  const [failed, setFailed] = useState(false);
-  const src = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
-
-  if (failed) {
-    return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-        {symbol.slice(0, 3)}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={symbol}
-      className="h-9 w-9 rounded-lg object-contain"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 /* ── Summary cards ── */
 function StatCard({
   label,
