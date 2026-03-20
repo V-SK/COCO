@@ -227,17 +227,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
         } else {
           finalizeStreaming();
         }
-        setPendingToolCall(null);
         if (RICH_TOOLS.has(event.toolId)) {
+          // Capture params BEFORE clearing pendingToolCall
+          const capturedParams = pendingToolCall?.params;
+          setPendingToolCall(null);
           addMessage({
             id: crypto.randomUUID(),
             role: 'tool',
             content: event.result.text || JSON.stringify(event.result.data),
             timestamp: Date.now(),
             toolId: event.toolId,
-            toolParams: pendingToolCall?.params,
+            toolParams: capturedParams,
             toolResult: event.result,
           });
+        } else {
+          setPendingToolCall(null);
         }
         break;
       }
