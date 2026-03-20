@@ -45,7 +45,6 @@ interface ChatState {
   error: string | null;
   streamingContent: string;
   pendingToolCall: { toolId: string; params: unknown } | null;
-  suppressTextAfterTool: boolean;
   setSessionId: (id: string) => void;
   setConnected: (connected: boolean) => void;
   setLoading: (loading: boolean) => void;
@@ -74,7 +73,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   streamingContent: '',
   pendingToolCall: null,
-  suppressTextAfterTool: false,
   sessions: ensureCurrentSession(getOrCreateSessionId(), loadSessions()),
 
   setSessionId: (id) => {
@@ -151,7 +149,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [],
       streamingContent: '',
       pendingToolCall: null,
-      suppressTextAfterTool: false,
       error: null,
       isLoading: false,
       sessions,
@@ -165,7 +162,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       messages: [],
       streamingContent: '',
       pendingToolCall: null,
-      suppressTextAfterTool: false,
       error: null,
       isLoading: false,
     });
@@ -194,22 +190,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     switch (event.type) {
       case 'text': {
-        // If a rich tool card was rendered, suppress ALL follow-up text chunks
-        // (the AI repeats the same scan report in plain text — redundant)
-        if (get().suppressTextAfterTool) {
-          // Drop this text chunk entirely
-          break;
-        }
         appendToStreaming(event.content);
         break;
       }
       case 'tool_call': {
-        // For scan.contract, drop the "让我分析一下..." filler text before tool call
-        if (RICH_TOOLS.has(event.toolId)) {
-          set({ streamingContent: '' });
-        } else {
-          finalizeStreaming();
-        }
+        finalizeStreaming();
         setPendingToolCall({
           toolId: event.toolId,
           params: event.params,
@@ -218,19 +203,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         break;
       }
       case 'tool_result': {
-        // For rich tool cards, discard any streaming text that came before the tool call
-        // (e.g. "让我帮你分析一下这个合约..." — redundant filler)
+        finalizeStreaming();
+        const capturedParams = pendingToolCall?.params;
+        setPendingToolCall(null);
         if (RICH_TOOLS.has(event.toolId)) {
-          // Drop partial streaming text instead of finalizing it
-          // and enable suppression for all subsequent text chunks until 'done'
-          set({ streamingContent: '', suppressTextAfterTool: true });
-        } else {
-          finalizeStreaming();
-        }
-        if (RICH_TOOLS.has(event.toolId)) {
-          // Capture params BEFORE clearing pendingToolCall
-          const capturedParams = pendingToolCall?.params;
-          setPendingToolCall(null);
           addMessage({
             id: crypto.randomUUID(),
             role: 'tool',
@@ -240,8 +216,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
             toolParams: capturedParams,
             toolResult: event.result,
           });
-        } else {
-          setPendingToolCall(null);
         }
         break;
       }
@@ -250,18 +224,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         setPendingToolCall(null);
         setError(event.error);
         setLoading(false);
-        set({ suppressTextAfterTool: false });
         break;
       case 'done':
-        // Don't finalize streaming if we were suppressing — nothing to finalize
-        if (!get().suppressTextAfterTool) {
-          finalizeStreaming();
-        } else {
-          // Clear any accidentally accumulated streaming content
-          set({ streamingContent: '' });
-        }
+        finalizeStreaming();
         setLoading(false);
-        set({ suppressTextAfterTool: false });
         break;
       default:
         break;
