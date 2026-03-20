@@ -19,6 +19,7 @@ import type {
   ToolResult,
   WalletExecutionRequest,
 } from './types.js';
+import { selectTools } from './tool-router.js';
 import { safeJsonStringify } from './utils/json.js';
 import { toJsonSchema } from './utils/schema.js';
 import { DefaultWalletExecutor } from './wallet/executor.js';
@@ -226,14 +227,22 @@ export function createRuntime(
 
       await memory.mergeMetadata(ctx.sessionId, ctx.metadata);
 
+      // Track recently-used tool IDs for follow-up context
+      const recentToolIds: string[] = [];
+
       for (let i = 0; i < 5; i += 1) {
         try {
           let fullText = '';
           const toolCalls: LLMToolCall[] = [];
 
+          // Dynamic tool selection — only send relevant tools to LLM
+          const allToolDefs = runtime.getToolDefinitions();
+          const selectedToolDefs = selectTools(allToolDefs, message, recentToolIds.length > 0 ? recentToolIds : undefined);
+          logger.info({ total: allToolDefs.length, selected: selectedToolDefs.length, tools: selectedToolDefs.map(t => t.function.name) }, 'Tool router: selected tools');
+
           for await (const chunk of llm.chatStream(
             messages,
-            runtime.getToolDefinitions(),
+            selectedToolDefs,
           )) {
             if (typeof chunk === 'string') {
               fullText += chunk;
@@ -286,6 +295,7 @@ export function createRuntime(
             }
 
             yield { type: 'tool_call', toolId: call.name, params: parsedArgs };
+            recentToolIds.push(call.name);
             const result = await runtime.invokeTool(call.name, ctx, parsedArgs);
             yield { type: 'tool_result', toolId: call.name, result };
 

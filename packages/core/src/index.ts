@@ -12,3 +12,4 @@ export * from './utils/json.js';
 export * from './utils/markets.js';
 export * from './utils/optional-import.js';
 export * from './utils/safety.js';
+export { selectTools } from './tool-router.js';
