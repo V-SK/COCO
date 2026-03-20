@@ -157,7 +157,7 @@ function DexScreenerEmbed({ chainId, address }: { chainId: string; address: stri
         onLoad={() => setLoaded(true)}
         title="DexScreener Chart"
         allow="clipboard-write"
-        sandbox="allow-scripts allow-same-origin allow-popups"
+        referrerPolicy="no-referrer"
       />
     </div>
   );
