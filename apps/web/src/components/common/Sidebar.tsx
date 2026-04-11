@@ -26,6 +26,7 @@ function timeAgo(ts: number): string {
 export function Sidebar() {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
+  const setActiveTab = useUiStore((state) => state.setActiveTab);
   const sessionId = useChatStore((state) => state.sessionId);
   const sessions = useChatStore((state) => state.sessions);
   const startNewChat = useChatStore((state) => state.startNewChat);
@@ -38,6 +39,7 @@ export function Sidebar() {
   function handleNewChat() {
     haptic();
     startNewChat();
+    setActiveTab('chat');
     setSidebarOpen(false);
   }
 
@@ -48,6 +50,7 @@ export function Sidebar() {
     }
     haptic();
     switchSession(id);
+    setActiveTab('chat');
     setSidebarOpen(false);
   }
 
